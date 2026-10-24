@@ -68,7 +68,28 @@ web_modules/
 # dotenv environment variable files
 .env
 .env.*
-!.env.example
+backend/.env
+frontend/dist/
+backend/img_pd/*
+backend/img_mem/*
+
+
+.env
+.env.*
+backend/.env
+frontend/dist/
+backend/img_pd/*
+backend/img_mem/*
+
+.*
+!.env
+.env.*
+backend/.env
+frontend/dist/
+backend/img_pd/*
+backend/img_mem/*
+
+.example
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -150,3 +171,9 @@ vite.config.ts.timestamp-*
 
 
 .env
+.env.*
+backend/.env
+frontend/dist/
+backend/img_pd/*
+backend/img_mem/*
+
