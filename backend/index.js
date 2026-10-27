@@ -1,11 +1,11 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config(); // ดึงค่า .env ในโฟลเดอร์ปัจจุบันที่รันอยู่
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import cartRoute from "./routes/cartRoutes.js";
-
 
 const app = express();
 app.use(cors());

@@ -13,3 +13,4 @@ import db from './services/db.js';
   console.log('Admin พร้อมใช้งาน:', process.env.ADMIN_EMAIL);
   await db.end();
 })();
+
