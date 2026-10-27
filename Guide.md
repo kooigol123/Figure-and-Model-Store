@@ -68,9 +68,11 @@ git push origin feature/admin
 5. เปิดหน้าเว็บ GitHub แล้วกดสร้าง Pull Request (PR) ให้เพื่อนช่วยเช็คก่อน merge เข้า main
 
 6. เมื่อ Merge เสร็จแล้ว (เตรียมเริ่มงานใหม่):
+```bash
 # สลับกลับมาที่ main แล้วดึงโค้ดใหม่ที่มีงานใหม่อัพเข้ามา
 git checkout main
 git pull origin main
 
 # ลบ branch เก่าที่เสร็จแล้วทิ้งจากเครื่อง (เพื่อไม่ให้รก)
 git branch -d feature/<ชื่องาน>
+```
