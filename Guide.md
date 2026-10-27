@@ -11,7 +11,7 @@
 * ห้ามทำงานชิ้นใหม่ใน branch เดิม ให้สลับกลับ main ดึงโค้ดล่าสุด แล้วแตก branch ใหม่เสมอ
 ---
 
-## หลังจากที่ Git Clone Repo นี้มาให้ติดตั้ง Node
+## หลังจากที่ Git Clone Repo นี้เสร็จให้มาให้ติดตั้ง Node
 
 # ติดตั้งฝั่ง Backend
 cd backend
@@ -68,7 +68,7 @@ git push origin feature/admin
 5. เปิดหน้าเว็บ GitHub แล้วกดสร้าง Pull Request (PR) ให้เพื่อนช่วยเช็คก่อน merge เข้า main
 
 6. เมื่อ Merge เสร็จแล้ว (เตรียมเริ่มงานใหม่):
-# สลับกลับมาที่ main แล้วดึงโค้ดใหม่ที่มีงานเพื่อนๆ เข้ามา
+# สลับกลับมาที่ main แล้วดึงโค้ดใหม่ที่มีงานใหม่อัพเข้ามา
 git checkout main
 git pull origin main
 
