@@ -44,10 +44,15 @@
             <small class="input-hint" v-if="!isLogin">อย่างน้อย 8 ตัวอักษร</small>
           </div>
 
-          <button type="submit" class="btn-submit">
-            {{ isLogin ? '→ เข้าสู่ระบบ' : '👤+ สมัครสมาชิก' }}
+          <button type="submit" class="btn-submit" :disabled="loading">
+            <template v-if="loading">กำลังดำเนินการ...</template>
+            <template v-else>{{ isLogin ? '→ เข้าสู่ระบบ' : '👤+ สมัครสมาชิก' }}</template>
           </button>
         </form>
+
+        <div v-if="message" class="auth-message" :class="messageOk ? 'is-success' : 'is-error'">
+          {{ message }}
+        </div>
 
         <div class="demo-account-box" v-if="isLogin">
           <span class="demo-label">บัญชีทดลอง:</span>
@@ -61,11 +66,20 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore'
 
+const API_URL = 'http://localhost:3000'
+
+const route = useRoute()
 const router = useRouter()
-const isLogin = ref(true)
+const authStore = useAuthStore()
+const isLogin = ref(route.path !== '/register') // เข้าทาง /register = เปิดแท็บสมัครสมาชิก
+const loading = ref(false)
+const message = ref('')
+const messageOk = ref(false)
 
 const form = reactive({
   name: '',
@@ -73,60 +87,69 @@ const form = reactive({
   password: ''
 })
 
+onMounted(async () => {
+  // มี cookie ที่ยัง login อยู่ → ไปหน้าสมาชิกเลย
+  if (await authStore.fetchMe()) {
+    router.push('/pagemember')
+  }
+})
+
 const switchTab = (status) => {
   isLogin.value = status
   form.name = ''
   form.email = ''
   form.password = ''
+  message.value = ''
 }
 
-const handleSubmit = () => {
-  if (!isLogin.value) {
-    if (form.password.length < 8) {
-      alert('⚠️ รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร')
-      return
+const showMessage = (text, ok) => {
+  message.value = text
+  messageOk.value = ok
+}
+
+const handleSubmit = async () => {
+  if (!isLogin.value && form.password.length < 8) {
+    showMessage('⚠️ รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร', false)
+    return
+  }
+
+  loading.value = true
+  message.value = ''
+  try {
+    if (!isLogin.value) {
+      // สมัครสมาชิก → สลับไปแท็บ Login พร้อมอีเมลที่สมัคร
+      await axios.post(`${API_URL}/auth/register`, {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password
+      })
+      const email = form.email.trim()
+      switchTab(true)
+      form.email = email
+      showMessage('✨ สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ', true)
+    } else {
+      // เข้าสู่ระบบ → backend ตั้ง cookie token ให้ (httpOnly)
+      const res = await axios.post(`${API_URL}/auth/login`, {
+        email: form.email.trim(),
+        password: form.password
+      })
+      authStore.login(res.data.user)
+      router.push('/product')
     }
-
-    const newUserData = {
-      name: form.name,
-      email: form.email,
-      role: 'สมาชิกทั่วไป (Member)',
-      avatar: '',
-      orderCount: 0
-    }
-    localStorage.setItem('registeredUser', JSON.stringify(newUserData))
-
-    isLogin.value = true
-    form.name = ''
-    form.email = ''
-    form.password = ''
-  } else {
-    const savedUser = localStorage.getItem('registeredUser')
-    let parsedUser = savedUser ? JSON.parse(savedUser) : null
-
-    const userData = {
-      name: parsedUser && parsedUser.email === form.email ? parsedUser.name : 'ผู้ใช้งานระบบ',
-      email: form.email,
-      role: 'สมาชิกทั่วไป (Member)',
-      avatar: parsedUser?.avatar || '',
-      orderCount: parsedUser?.orderCount || 0
-    }
-    
-    localStorage.setItem('user', JSON.stringify(userData))
-    localStorage.setItem('token', 'sample-jwt-token-model-store')
-
-    alert('✨ เข้าสู่ระบบสำเร็จ!')
-    router.push('/products')
+  } catch (err) {
+    showMessage(err.response?.data?.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', false)
+  } finally {
+    loading.value = false
   }
 }
 
 const fillDemo = (type) => {
   if (type === 'member') {
-    form.email = 'thara@student.ac.th'
-    form.password = '12345678'
+    form.email = 'test@gmail.com'
+    form.password = 'test1234'
   } else {
-    form.email = 'admin@modelstore.ac.th'
-    form.password = '12345678'
+    form.email = 'admin@model.store'
+    form.password = 'admin1234'
   }
 }
 </script>
@@ -295,6 +318,31 @@ const fillDemo = (type) => {
 
 .btn-submit:hover {
   background: #ea580c;
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.auth-message {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  border: 1px solid;
+}
+
+.auth-message.is-success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.auth-message.is-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
 }
 
 .demo-account-box {
