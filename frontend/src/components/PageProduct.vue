@@ -41,20 +41,18 @@
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <select class="form-select text-muted custom-select">
-                        <option selected>ทุกหมวดหมู่</option>
-                        <option value="1">สเกลฟิกเกอร์</option>
-                        <option value="2">โมเดลกันพลา</option>
-                        <option value="3">เนนโดรอยด์</option>
+                    <select class="form-select custom-select" :class="{ 'text-muted': !selectedCat }" v-model="selectedCat">
+                        <option value="">ทุกหมวดหมู่</option>
+                        <option v-for="cat in categories" :key="cat.categoryId" :value="cat.categoryId">{{ cat.categoryName }}</option>
                     </select>
                 </div>
 
                 <div class="col-lg-4 col-md-6 d-flex justify-content-between align-items-center">
                     <div class="text-muted" style="font-size: 0.9rem;">
-                        พบ <span class="fw-bold text-dark">{{ products.length }}</span> รายการ
+                        พบ <span class="fw-bold text-dark">{{ filteredProducts.length }}</span> รายการ
                     </div>
 
-                    <button v-if="dutyId === 'admin'" class="btn btn-orange text-white fw-semibold px-3 py-2 shadow-sm d-flex align-items-center gap-1" style="border-radius: 8px; font-size: 0.85rem;" @click="alert('ระบบกำลังพัฒนาหน้าเพิ่มสินค้า')">
+                    <button v-if="dutyId === 'admin'" class="btn btn-orange text-white fw-semibold px-3 py-2 shadow-sm d-flex align-items-center gap-1" style="border-radius: 8px; font-size: 0.85rem;" @click="addingProduct = true">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
                         </svg>
@@ -64,18 +62,18 @@
             </div>
         </div>
          <!-- รายการสินค้า -->
-        <div class="row g-4" v-if="products.length > 0">
-            <div v-for="(pd, index) in products" :key="pd.pdId" class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+        <div class="row g-4" v-if="filteredProducts.length > 0">
+            <div v-for="(pd, index) in filteredProducts" :key="pd.pdId" class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
                 <div class="card h-100 shadow-sm border-0 product-card">
                     <router-link :to="{name: 'ProductShow', params:{pdId:pd.pdId}}" class="text-decoration-none">
                         <div class="img-wrapper">
-                            <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`" class="card-img-top p2" alt="">
+                            <img :src="productImg(pd)" class="card-img-top p2" alt="">
                         </div>
                     </router-link>
                     <div class="card-body d-flex flex-column p-3">
                         <div class="d-flex justify-content-between text-muted mb-2" style="font-size: 0.75rem;">
                             <span>ID {{ String(pd.pdId).padStart(3, '0') }}</span>
-                            <span>{{ pd.category?.cateName || 'หมวดหมู่สินค้า' }}</span>
+                            <span>{{ pd.category?.categoryName || 'หมวดหมู่สินค้า' }}</span>
                         </div>
                         <router-link :to="{name: 'ProductShow', params:{pdId:pd.pdId}}" class="text-decoration-none">
                             <h6 class="card-title fw-bold text-dark mb-3 text-truncate-2" style="font-size: 0.95rem; line-height: 1.4;">
@@ -87,11 +85,11 @@
                                 {{ pd.brand?.brandName ?? 'ไม่ระบุแบรนด์' }}
                             </span>
                             <span class="fw-bold text-dark" style="font-size: 1.05rem;">
-                                {{ pd.pdPrice ? pd.pdPrice.toLocaleString() : '0' }} THB
+                                {{ pd.price ? Number(pd.price).toLocaleString() : '0' }} THB
                             </span>
                         </div>
                         <p class="card-text text-secondary mb-4 text-truncate-2" style="font-size: 0.75rem;">
-                            {{ pd.pdDetail || 'รายละเอียดสินค้าเบื้องต้น...' }}
+                            {{ pd.description || 'รายละเอียดสินค้าเบื้องต้น...' }}
                         </p>
                         <div class="d-flex gap-2 mt-auto">
                             <button class="btn btn-cart fw-semibold d-flex align-items-center justify-content-center gap-2" :class="dutyId === 'admin' ? 'w-75' : 'w-100'" @click="addToCart(pd)">
@@ -102,7 +100,7 @@
                                 ใส่ตะกร้า
                             </button>
 
-                            <button v-if="dutyId === 'admin'" class="btn btn-warning fw-semibold text-dark w-25 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="border-radius: 8px; font-size: 0.9rem;" @click="alert('ระบบกำลังพัฒนาหน้าระบบจัดการสินค้า')">
+                            <button v-if="dutyId === 'admin'" class="btn btn-warning fw-semibold text-dark w-25 d-flex align-items-center justify-content-center gap-1 shadow-sm" style="border-radius: 8px; font-size: 0.9rem;" @click="editingProduct = pd">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
                                     <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
                                 </svg>
@@ -114,7 +112,7 @@
             </div>
         </div>
 
-        <div v-if="products.length === 0" class="text-center py-5 my-4" style="background-color: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 12px;">
+        <div v-if="filteredProducts.length === 0" class="text-center py-5 my-4" style="background-color: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 12px;">
             <div class="d-flex justify-content-center mb-3">
                 <div class="d-flex align-items-center justify-content-center bg-white rounded-circle shadow-sm" style="width: 56px; height: 56px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#64748b" viewBox="0 0 16 16">
@@ -124,21 +122,50 @@
             </div>
             <h6 class="fw-bold mb-2" style="color: #0f172a;">ไม่พบสินค้าที่ตรงกับการค้นหา</h6>
             <p class="text-secondary mb-4" style="font-size: 0.9rem;">ลองเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่อื่น</p>
-            <button class="btn bg-white border fw-semibold px-4 py-2 hover-gray" style="border-radius: 8px; color: #334155; border-color: #e2e8f0 !important;" @click="stext = ''">
+            <button class="btn bg-white border fw-semibold px-4 py-2 hover-gray" style="border-radius: 8px; color: #334155; border-color: #e2e8f0 !important;" @click="stext = ''; selectedCat = ''">
                 ล้างตัวกรอง
             </button>
         </div>
 
+        <ProductEditModal v-if="editingProduct" :product="editingProduct" :categories="categories" :image-url="productImg(editingProduct)"
+            @close="editingProduct = null" @saved="onProductSaved" @deleted="onProductDeleted" />
+        <ProductEditModal v-if="addingProduct" :categories="categories"
+            @close="addingProduct = false" @saved="onProductSaved" />
     </div>
 </template>
 
 <script setup>
 
 import axios from 'axios';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
-axios.defaults.withCredentials = true
+import { useAuthStore } from '@/stores/authStore'
+import ProductEditModal from './ProductEditModal.vue'
+
+    const authStore = useAuthStore()
+
+    // --- แก้ไขสินค้า (admin) ---
+    const editingProduct = ref(null)
+    const addingProduct = ref(false)
+    const imgVersion = ref(Date.now()) // เปลี่ยนเมื่ออัปโหลดรูปใหม่ เพื่อให้รูปโหลดใหม่ทันที
+    const productImg = (pd) => `http://localhost:3000/img_pd/${pd.pdId}.jpg?v=${imgVersion.value}`
+
+    const onProductSaved = (updated, imageChanged, isNew) => {
+        if (isNew) {
+            products.value = [...products.value, updated]
+        } else {
+            products.value = products.value.map(p => p.pdId === updated.pdId ? updated : p)
+        }
+        if (imageChanged) imgVersion.value = Date.now()
+        editingProduct.value = null
+        addingProduct.value = false
+    }
+
+    const onProductDeleted = (pdId) => {
+        products.value = products.value.filter(p => p.pdId !== pdId)
+        editingProduct.value = null
+    }
 
     const products = ref([])
     const stext = ref("")
@@ -155,9 +182,25 @@ axios.defaults.withCredentials = true
         .catch(err=>console.log(err.message))
     }
 
+    const categories = ref([])
+    const selectedCat = ref("") // "" = ทุกหมวดหมู่
+
+    // กรองตามหมวดหมู่จากรายการที่ได้ (ทำงานร่วมกับช่องค้นหา)
+    const filteredProducts = computed(() => {
+        if (!selectedCat.value) return products.value
+        return products.value.filter(pd => pd.categoryId === selectedCat.value)
+    })
+
+    const fetchCategories = async () => {
+        await axios.get(`http://localhost:3000/categories`)
+        .then((res) => { categories.value = res.data })
+        .catch(err => console.log(err.message))
+    }
+
     onMounted(async ()=>{
         await checkUserDuty()
         fetchAllProducts();
+        fetchCategories()
     })
 
     const fetchAllProducts = async()=>{
@@ -167,14 +210,8 @@ axios.defaults.withCredentials = true
     }
 
     const checkUserDuty = async () => {
-        try {
-            const res = await axios.get(`http://localhost:3000/members/detail`)
-            if (res.data.login) {
-                dutyId.value = res.data.dutyId
-            }
-        } catch (err) {
-            console.log(err.message)
-        }
+        const user = await authStore.fetchMe()
+        dutyId.value = user?.role ?? null
     }
 
     watch(stext, async (newValue) =>{
@@ -192,24 +229,24 @@ axios.defaults.withCredentials = true
 
     const addToCart = async (pd) =>{
         try{
-            const resUser = await axios.get(`http://localhost:3000/members/detail`);
+            const user = await authStore.fetchMe();
 
-            if (resUser.data.login){
-                const memEmail = resUser.data.memEmail;
+            if (user){
+                const userId = user.id;
                 let currentCartId = null;
 
-                const resChkCart = await axios.post(`http://localhost:3000/carts/chkcart`, { memEmail })
+                const resChkCart = await axios.post(`http://localhost:3000/carts/chkcart`, { userId })
                 currentCartId = resChkCart.data.cartId
 
                 if (!currentCartId){
-                    const resAddCart = await axios.post(`http://localhost:3000/carts/addcart`, { cusId: memEmail })
-                    currentCartId = resAddCart.data.messageAddCart
+                    const resAddCart = await axios.post(`http://localhost:3000/carts/addcart`, { userId })
+                    currentCartId = resAddCart.data.cartId
                 }
 
                 const cartdtl = {
                     cartId: currentCartId,
                     pdId: pd.pdId,
-                    pdPrice: pd.pdPrice
+                    price: pd.price
                 }
 
                 await axios.post(`http://localhost:3000/carts/addcartdtl`, cartdtl)

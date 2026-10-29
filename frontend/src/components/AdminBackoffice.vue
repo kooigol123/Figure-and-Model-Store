@@ -13,8 +13,8 @@
                 </p>
             </div>
             <div>
-                <button class="btn btn-white border shadow-sm fw-semibold d-flex align-items-center gap-2" style="border-radius: 8px;" @click="alert('กำลังพัฒนาระบบจัดการสินค้า')">
-                    <i class="bi bi-box-seam"></i> จัดการสินค้า (12)
+                <button class="btn btn-white border shadow-sm fw-semibold d-flex align-items-center gap-2" style="border-radius: 8px;" @click="router.push('/product')">
+                    <i class="bi bi-box-seam"></i> จัดการสินค้า ({{ productCount }})
                 </button>
             </div>
         </div>
@@ -28,8 +28,8 @@
                             <i class="bi bi-people fs-5"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold text-dark mb-1">8</h3>
-                    <p class="text-secondary mb-0" style="font-size: 0.8rem;">Admin 2 บัญชี</p>
+                    <h3 class="fw-bold text-dark mb-1">{{ members.length }}</h3>
+                    <p class="text-secondary mb-0" style="font-size: 0.8rem;">Admin {{ adminCount }} บัญชี</p>
                 </div>
             </div>
             <div class="col-xl-3 col-md-6">
@@ -40,9 +40,9 @@
                             <i class="bi bi-person-check fs-5"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold text-dark mb-2">6</h3>
+                    <h3 class="fw-bold text-dark mb-2">{{ activeCount }}</h3>
                     <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1 fw-normal" style="font-size: 0.75rem; border-radius: 4px;">
-                        2 Suspended
+                        {{ suspendedCount }} Suspended
                     </span>
                 </div>
             </div>
@@ -55,8 +55,8 @@
                             <i class="bi bi-clipboard-data fs-5"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold text-dark mb-1">10</h3>
-                    <p class="text-secondary mb-0" style="font-size: 0.8rem;">รอยืนยัน 2 รายการ</p>
+                    <h3 class="fw-bold text-dark mb-1">{{ orders.length }}</h3>
+                    <p class="text-secondary mb-0" style="font-size: 0.8rem;">รอยืนยัน {{ pendingCount }} รายการ</p>
                 </div>
             </div>
             <div class="col-xl-3 col-md-6">
@@ -67,7 +67,7 @@
                             <i class="bi bi-wallet2 fs-5"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold text-dark mb-1">60,580 <span class="fs-5">บาท</span></h3>
+                    <h3 class="fw-bold text-dark mb-1">{{ confirmedSales.toLocaleString() }} <span class="fs-5">บาท</span></h3>
                     <p class="text-secondary mb-0" style="font-size: 0.8rem;">ยืนยันแล้ว + จัดส่งแล้ว</p>
                 </div>
             </div>
@@ -83,9 +83,36 @@
             </div>
             <div class="input-group" style="width: 280px;">
                 <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control border-start-0 ps-0" placeholder="ค้นหาชื่อ อีเมล หรือรหัสสมาชิก">
+                <input type="text" class="form-control border-start-0 ps-0" :class="{ 'border-end-0': memberSearch }" placeholder="ค้นหาชื่อ อีเมล หรือรหัสสมาชิก" v-model="memberSearch">
+                <span class="input-group-text bg-white border-start-0" style="cursor: pointer;" v-if="memberSearch" @click="memberSearch = ''">
+                    <i class="bi bi-x-lg text-secondary"></i>
+                </span>
             </div>
         </div>
+        <div v-if="actionError" class="alert alert-danger py-2 small d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ actionError }}</span>
+            <button type="button" class="btn-close btn-sm" @click="actionError = null"></button>
+        </div>
+
+        <!-- กล่องยืนยัน -->
+        <template v-if="confirmBox">
+            <div class="modal d-block" tabindex="-1" @click.self="answerConfirm(false)">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                        <div class="modal-body p-4">
+                            <h5 class="fw-bold mb-2">{{ confirmBox.title }}</h5>
+                            <p class="text-secondary mb-0">{{ confirmBox.message }}</p>
+                        </div>
+                        <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                            <button type="button" class="btn bg-white border fw-semibold px-4" style="border-radius: 8px;" @click="answerConfirm(false)">ยกเลิก</button>
+                            <button type="button" class="btn btn-primary fw-semibold px-4" style="border-radius: 8px;" @click="answerConfirm(true)">ยืนยัน</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-backdrop fade show"></div>
+        </template>
+
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" style="min-width: 1000px;">
@@ -101,10 +128,16 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="mem in members" :key="mem.memId">
+                        <tr v-if="filteredMembers.length === 0">
+                            <td colspan="7" class="text-center py-5 text-secondary">
+                                <i class="bi bi-search fs-3 mb-2 d-block"></i>
+                                ไม่พบสมาชิกที่ตรงกับ "{{ memberSearch }}"
+                            </td>
+                        </tr>
+                        <tr v-for="mem in filteredMembers" :key="mem.memId">
                             <td class="ps-4 fw-semibold text-secondary">{{ mem.memId }}</td>
                             <td>
-                                <img :src="`http://localhost:3000/img_mem/${mem.email}.jpg`" 
+                                <img :src="memberAvatar(mem.memId)"
                                      @error="$event.target.src='http://localhost:3000/img_mem/default.jpg'"
                                      alt="avatar" 
                                      class="rounded-circle object-fit-cover shadow-sm" 
@@ -130,12 +163,14 @@
                             </td>
                             <td class="text-end pe-4">
                                 <div class="d-flex justify-content-end gap-2">
-                                    <button class="btn btn-sm btn-outline-primary fw-semibold rounded px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" @click="alert('ระบบเปลี่ยนสถานะ')">
+                                    <button v-if="canChangeStatus(mem)" class="btn btn-sm btn-outline-primary fw-semibold rounded px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" @click="toggleStatus(mem)" :disabled="busyId === mem.memId">
                                         <i class="bi bi-arrow-repeat"></i> เปลี่ยนสถานะ
                                     </button>
-                                    <button class="btn btn-sm btn-outline-warning fw-semibold text-dark rounded px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" @click="alert('ระบบสลับ Role')">
+                                    <button v-if="canChangeRole(mem)" class="btn btn-sm btn-outline-warning fw-semibold text-dark rounded px-2 py-1 d-inline-flex align-items-center gap-1" style="font-size: 0.75rem;" @click="toggleRole(mem)" :disabled="busyId === mem.memId">
                                         <i class="bi bi-arrow-left-right"></i> สลับ Role
                                     </button>
+                                    <span v-if="mem.memId === authStore.user?.id" class="text-muted" style="font-size: 0.75rem;">(บัญชีของคุณ)</span>
+                                    <span v-else-if="mem.email === MAIN_ADMIN_EMAIL" class="text-muted" style="font-size: 0.75rem;">(admin หลัก)</span>
                                 </div>
                             </td>
                         </tr>
@@ -182,7 +217,7 @@
                             <td class="ps-4 fw-semibold text-dark">{{ order.orderId }}</td>
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    <img :src="`http://localhost:3000/img_mem/${order.memEmail}.jpg`" 
+                                    <img :src="memberAvatar(order.userId)"
                                          @error="$event.target.src='http://localhost:3000/img_mem/default.jpg'"
                                          alt="avatar" 
                                          class="rounded-circle object-fit-cover shadow-sm" 
@@ -208,7 +243,7 @@
                                 </span>
                             </td>
                             <td class="text-center pe-4">
-                                <button class="btn btn-sm btn-outline-primary fw-semibold rounded-pill px-3 d-inline-flex align-items-center gap-1" style="font-size: 0.8rem;" @click="viewDetail(order.orderId)">
+                                <button class="btn btn-sm btn-outline-primary fw-semibold rounded-pill px-3 d-inline-flex align-items-center gap-1" style="font-size: 0.8rem;" @click="viewDetail(order)">
                                     <i class="bi bi-eye"></i> ดูรายการสินค้า
                                 </button>
                             </td>
@@ -221,6 +256,99 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal รายการสินค้าในคำสั่งซื้อ -->
+        <template v-if="detailOrder">
+            <div class="modal d-block" tabindex="-1" @click.self="closeDetail">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0 shadow" style="border-radius: 16px;">
+                        <div class="modal-header px-4 py-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 40px; height: 40px; background-color: #eff6ff;">
+                                    <i class="bi bi-file-text text-primary fs-5"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-0">รายการสินค้าในคำสั่งซื้อ</h5>
+                                    <small class="text-secondary">Order Items · เลขที่ {{ detailOrder.orderId }}</small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" @click="closeDetail"></button>
+                        </div>
+
+                        <div class="modal-body px-4">
+                            <div class="row g-0 border rounded-3 p-3 mb-3" style="background-color: #f8fafc;">
+                                <div class="col-md-5">
+                                    <div class="text-secondary mb-2" style="font-size: 0.75rem;">สมาชิก</div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img :src="memberAvatar(detailOrder.userId)" @error="$event.target.src='http://localhost:3000/img_mem/default.jpg'" alt="" class="rounded-circle object-fit-cover" width="32" height="32">
+                                        <div class="lh-sm">
+                                            <div class="fw-semibold" style="font-size: 0.9rem;">{{ detailOrder.memName }}</div>
+                                            <div class="text-secondary" style="font-size: 0.75rem; font-family: monospace;">{{ detailOrder.memId }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-secondary mb-2" style="font-size: 0.75rem;">สั่งซื้อวันที่</div>
+                                    <div class="fw-bold">{{ detailOrder.orderDate }}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-secondary mb-2" style="font-size: 0.75rem;">สถานะ</div>
+                                    <span v-if="detailOrder.status === 'รอยืนยัน'" class="badge rounded-pill bg-warning bg-opacity-10 border border-warning text-warning-emphasis px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-clock"></i> รอยืนยัน
+                                    </span>
+                                    <span v-else-if="detailOrder.status === 'ยืนยันแล้ว'" class="badge rounded-pill bg-success bg-opacity-10 border border-success text-success px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-check-circle"></i> ยืนยันแล้ว
+                                    </span>
+                                    <span v-else class="badge rounded-pill bg-primary bg-opacity-10 border border-primary text-primary px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-truck"></i> จัดส่งแล้ว
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-3 overflow-hidden mb-3">
+                                <table class="table mb-0 align-middle detail-table">
+                                    <thead>
+                                        <tr class="text-secondary" style="font-size: 0.8rem;">
+                                            <th class="py-3 px-3 fw-semibold">No.</th>
+                                            <th class="py-3 px-3 fw-semibold">Product ID</th>
+                                            <th class="py-3 px-3 fw-semibold">Product Name</th>
+                                            <th class="py-3 px-3 fw-semibold text-end">Unit Price</th>
+                                            <th class="py-3 px-3 fw-semibold text-center">Quantity</th>
+                                            <th class="py-3 px-3 fw-semibold text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-if="detailLoading">
+                                            <td colspan="6" class="text-center py-4 text-muted">
+                                                <span class="spinner-border spinner-border-sm me-2"></span> กำลังโหลด...
+                                            </td>
+                                        </tr>
+                                        <tr v-else v-for="(item, index) in detailItems" :key="item.pdId">
+                                            <td class="py-3 px-3 text-muted">{{ item.row_number || (index + 1) }}</td>
+                                            <td class="py-3 px-3 text-muted" style="font-family: monospace;">{{ String(item.pdId).padStart(3, '0') }}</td>
+                                            <td class="py-3 px-3 fw-semibold text-dark">{{ item.pdName }}</td>
+                                            <td class="py-3 px-3 text-end">{{ Number(item.price).toLocaleString() }}</td>
+                                            <td class="py-3 px-3 text-center">{{ item.qty }}</td>
+                                            <td class="py-3 px-3 text-end fw-bold text-dark">{{ Number(item.subtotal).toLocaleString() }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="text-end text-secondary">
+                                จำนวนสินค้า <span class="fw-bold text-dark fs-5">{{ detailOrder.totalItems }}</span> ชิ้น,
+                                ยอดเงิน <span class="fw-bold text-dark fs-4">{{ detailOrder.totalAmount.toLocaleString() }}</span> บาท
+                            </div>
+                        </div>
+
+                        <div class="modal-footer px-4 py-3" style="background-color: #f8fafc; border-radius: 0 0 16px 16px;">
+                            <button type="button" class="btn btn-light border fw-semibold px-3" style="border-radius: 8px;" @click="closeDetail">ปิด</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-backdrop fade show"></div>
+        </template>
     </div>
 </template>
 
@@ -228,73 +356,170 @@
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
-axios.defaults.withCredentials = true;
+import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const dutyId = ref(null);
 const orders = ref([]);
 const members = ref([]);
 const filterStatus = ref('all');
+const productCount = ref(0);
 
 onMounted(async () => {
     await checkAdminDuty();
     if (dutyId.value === 'admin') {
         await fetchAllMembers();
         await fetchAllOrders();
+        await fetchProductCount();
     }
 });
 
-const checkAdminDuty = async () => {
+// จำนวนสินค้าทั้งหมดในร้าน สำหรับปุ่ม "จัดการสินค้า"
+const fetchProductCount = async () => {
     try {
-        const res = await axios.get(`http://localhost:3000/members/detail`);
-        if (res.data.login) {
-            dutyId.value = res.data.dutyId;
-            if(dutyId.value !== 'admin'){
-                router.push('/')
-            }
-        } else {
-            router.push('/login');
-        }
+        const res = await axios.get(`http://localhost:3000/products`);
+        productCount.value = res.data.length;
     } catch (err) {
         console.log(err.message);
+    }
+};
+
+const checkAdminDuty = async () => {
+    const user = await authStore.fetchMe();
+    if (user) {
+        dutyId.value = user.role;
+        if(dutyId.value !== 'admin'){
+            router.push('/')
+        }
+    } else {
         router.push('/login');
     }
 };
 
 const fetchAllMembers = async () => {
     try {
-        // สามารถเชื่อมต่อ API ดึงสมาชิกระบบจริงที่นี่
-        // const res = await axios.get(`http://localhost:3000/members/all`);
-        // members.value = res.data;
-
-        // Mock data สำหรับแสดงผลรายชื่อสมาชิก
-        members.value = [
-            { memId: 'M001', name: 'กิตติพงษ์ ศรีสุข', nickname: 'คุณ', email: 'admin@modelstore.ac.th', role: 'admin', status: 'Active' },
-            { memId: 'M002', name: 'ณัฐวุฒิ วงศ์ใหญ่', email: 'natthawut.w@student.ac.th', role: 'member', status: 'Active' },
-            { memId: 'M003', name: 'พิมพ์ชนก แก้วมณี', email: 'pimchanok.k@student.ac.th', role: 'member', status: 'Active' },
-            { memId: 'M004', name: 'ธนากร บุญมา', email: 'thanakorn.b@student.ac.th', role: 'member', status: 'Suspended' },
-            { memId: 'M005', name: 'ศิริพร จันทร์เพ็ญ', email: 'siriporn.j@student.ac.th', role: 'member', status: 'Active' }
-        ];
+        // ดึงสมาชิกจริงจาก backend (ต้องเป็น admin) แล้วแปลงให้ตรงกับที่หน้าจอใช้
+        const res = await axios.get(`http://localhost:3000/admin/users`);
+        members.value = res.data.map(u => ({
+            memId: u.id,
+            name: u.name,
+            email: u.email,
+            role: u.role === 'admin' ? 'admin' : 'member',
+            status: u.status === 'suspended' ? 'Suspended' : 'Active'
+        }));
     } catch (err) {
         console.log(err.message);
     }
 };
+
+const formattedDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+// สถานะจากคอลัมน์ใน carts: cartSend → จัดส่งแล้ว, cartCf → ยืนยันแล้ว, นอกนั้น รอยืนยัน
+const orderStatus = (o) => o.cartSend ? 'จัดส่งแล้ว' : (o.cartCf ? 'ยืนยันแล้ว' : 'รอยืนยัน');
 
 const fetchAllOrders = async () => {
     try {
-        orders.value = [
-            { orderId: '202502180003', memName: 'ณัฐวุฒิ วงศ์ใหญ่', memId: 'M002', memEmail: 'natthawut.w@student.ac.th', orderDate: '2025-02-18', totalItems: 15, totalAmount: 42060, status: 'รอยืนยัน' },
-            { orderId: '202502180002', memName: 'ภูริ ทองดี', memId: 'M006', memEmail: 'phuri', orderDate: '2025-02-18', totalItems: 2, totalAmount: 2180, status: 'รอยืนยัน' },
-            { orderId: '202502180001', memName: 'พิมพ์ชนก แก้วมณี', memId: 'M003', memEmail: 'pim', orderDate: '2025-02-18', totalItems: 3, totalAmount: 11570, status: 'ยืนยันแล้ว' },
-            { orderId: '202502140001', memName: 'ธนากร บุญมา', memId: 'M004', memEmail: 'thanakorn', orderDate: '2025-02-14', totalItems: 2, totalAmount: 2580, status: 'ยืนยันแล้ว' },
-            { orderId: '202502100001', memName: 'อรอุมา สุขใจ', memId: 'M007', memEmail: 'onuma', orderDate: '2025-02-10', totalItems: 2, totalAmount: 5780, status: 'ยืนยันแล้ว' },
-            { orderId: '202502030001', memName: 'ณัฐวุฒิ วงศ์ใหญ่', memId: 'M002', memEmail: 'natthawut.w@student.ac.th', orderDate: '2025-02-03', totalItems: 4, totalAmount: 7260, status: 'ยืนยันแล้ว' },
-            { orderId: '202501270001', memName: 'ภูริ ทองดี', memId: 'M006', memEmail: 'phuri', orderDate: '2025-01-27', totalItems: 1, totalAmount: 13900, status: 'จัดส่งแล้ว' },
-        ];
+        const res = await axios.get(`http://localhost:3000/admin/orders`);
+        orders.value = res.data.map(o => ({
+            orderId: o.cartId,
+            userId: o.userId,
+            memName: o.userName,
+            memId: `M${String(o.userId).padStart(3, '0')}`,
+            orderDate: formattedDate(o.cartDate),
+            totalItems: Number(o.total_items),
+            totalAmount: Number(o.total_amount),
+            status: orderStatus(o),
+        }));
     } catch (err) {
         console.log(err.message);
     }
 };
+
+// รูปโปรไฟล์ img_mem/<userId>.jpg (ถ้าไม่มีจะ fallback เป็น default.jpg ใน @error)
+const pageVersion = Date.now();
+const memberAvatar = (userId) => `http://localhost:3000/img_mem/${userId}.jpg?v=${pageVersion}`;
+
+// --- เปลี่ยนสถานะ / สลับ Role ---
+const MAIN_ADMIN_EMAIL = 'admin@model.store';
+const busyId = ref(null);
+const actionError = ref(null);
+const isMainAdmin = computed(() => authStore.user?.email === MAIN_ADMIN_EMAIL);
+
+// ทุกคนยกเว้นตัวเองและ admin หลัก
+const canChangeStatus = (mem) => mem.memId !== authStore.user?.id && mem.email !== MAIN_ADMIN_EMAIL;
+// เฉพาะ admin หลักเห็นปุ่มนี้
+const canChangeRole = (mem) => isMainAdmin.value && canChangeStatus(mem);
+
+// กล่องยืนยันในหน้าเว็บ (ใช้แทน confirm() ที่เบราว์เซอร์บล็อกได้เมื่อเปิดซ้ำหลายครั้ง)
+const confirmBox = ref(null); // { title, message, resolve }
+const askConfirm = (title, message) => new Promise(resolve => {
+    confirmBox.value = { title, message, resolve };
+});
+const answerConfirm = (ok) => {
+    confirmBox.value?.resolve(ok);
+    confirmBox.value = null;
+};
+
+const toggleStatus = async (mem) => {
+    const next = mem.status === 'Active' ? 'suspended' : 'active';
+    const label = next === 'suspended' ? 'ระงับการใช้งาน (Suspended)' : 'เปิดใช้งาน (Active)';
+    if (!await askConfirm('เปลี่ยนสถานะ', `ยืนยันเปลี่ยนสถานะของ ${mem.name} เป็น ${label}?`)) return;
+    busyId.value = mem.memId;
+    actionError.value = null;
+    try {
+        const res = await axios.patch(`http://localhost:3000/admin/users/${mem.memId}/status`, { status: next });
+        mem.status = res.data.status === 'suspended' ? 'Suspended' : 'Active';
+    } catch (err) {
+        actionError.value = err.response?.data?.message || 'เปลี่ยนสถานะไม่สำเร็จ';
+    } finally {
+        busyId.value = null;
+    }
+};
+
+const toggleRole = async (mem) => {
+    const next = mem.role === 'admin' ? 'user' : 'admin';
+    const label = next === 'admin' ? 'Admin' : 'Member';
+    if (!await askConfirm('สลับ Role', `ยืนยันเปลี่ยน role ของ ${mem.name} เป็น ${label}?`)) return;
+    busyId.value = mem.memId;
+    actionError.value = null;
+    try {
+        const res = await axios.patch(`http://localhost:3000/admin/users/${mem.memId}/role`, { role: next });
+        mem.role = res.data.role === 'admin' ? 'admin' : 'member';
+    } catch (err) {
+        actionError.value = err.response?.data?.message || 'สลับ Role ไม่สำเร็จ';
+    } finally {
+        busyId.value = null;
+    }
+};
+
+// --- ค้นหาสมาชิก (พิมพ์แล้วกรองทันที) จากชื่อ อีเมล หรือรหัสสมาชิก ---
+const memberSearch = ref('');
+const filteredMembers = computed(() => {
+    const q = memberSearch.value.trim().toLowerCase();
+    if (!q) return members.value;
+    return members.value.filter(m =>
+        (m.name || '').toLowerCase().includes(q) ||
+        (m.email || '').toLowerCase().includes(q) ||
+        String(m.memId).toLowerCase().includes(q)
+    );
+});
+
+// --- ตัวเลขในการ์ดสรุป ---
+const adminCount = computed(() => members.value.filter(m => m.role === 'admin').length);
+const activeCount = computed(() => members.value.filter(m => m.status === 'Active').length);
+const suspendedCount = computed(() => members.value.filter(m => m.status === 'Suspended').length);
+const pendingCount = computed(() => orders.value.filter(o => o.status === 'รอยืนยัน').length);
+const confirmedSales = computed(() => orders.value
+    .filter(o => o.status === 'ยืนยันแล้ว' || o.status === 'จัดส่งแล้ว')
+    .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0));
 
 const filteredOrders = computed(() => {
     if (filterStatus.value === 'all') {
@@ -303,12 +528,38 @@ const filteredOrders = computed(() => {
     return orders.value.filter(order => order.status === filterStatus.value);
 });
 
-const viewDetail = (orderId) => {
-    alert(`กำลังเปิดดูรายละเอียดของออเดอร์: ${orderId}\n(เตรียมเชื่อมต่อไปหน้ารายละเอียด)`);
+// --- Modal รายการสินค้าในคำสั่งซื้อ ---
+const detailOrder = ref(null);
+const detailItems = ref([]);
+const detailLoading = ref(false);
+
+const viewDetail = async (order) => {
+    detailOrder.value = order;
+    detailItems.value = [];
+    detailLoading.value = true;
+    try {
+        const res = await axios.get(`http://localhost:3000/carts/getcartdtl/${order.orderId}`);
+        detailItems.value = res.data;
+    } catch (err) {
+        console.error(err);
+    } finally {
+        detailLoading.value = false;
+    }
+};
+
+const closeDetail = () => {
+    detailOrder.value = null;
 };
 </script>
 
 <style scoped>
+.detail-table th {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+.text-warning-emphasis {
+    color: #b45309 !important;
+}
 .table-hover tbody tr:hover {
     background-color: #f8fafc;
 }

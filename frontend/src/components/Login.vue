@@ -73,7 +73,6 @@
   import axios from 'axios';
   import { useRouter } from 'vue-router';
   import { useAuthStore } from '@/stores/authStore';
-  axios.defaults.withCredentials=true
 
   const authStore = useAuthStore()
   const router = useRouter()
@@ -83,35 +82,25 @@
   const message=ref(null)
 
   onMounted(async ()=>{
-    await getMember()
-    if (login.value) {
-      authStore.login()
+    // ถ้ามี cookie ที่ยัง login อยู่ ให้ไปหน้าสมาชิกเลย
+    if (await authStore.fetchMe()) {
       router.push('/pagemember')
     }
   })
 
-  const getMember=async()=>{
-    await axios.get(`http://localhost:3000/members/detail`)
-    .then((res)=>{
-      login.value=res.data.login
-    })
-    .catch(err=>console.log(err.message))
-  }
-
   const handleSubmit =async()=>{
     let members = {
-      loginName:loginName.value,
+      email:loginName.value,
       password:password.value
     }
     try{
-      const response = await axios.post(`http://localhost:3000/members/login`,members,{withCredentials:true})
+      // backend จะตั้ง cookie token ให้เอง
+      const response = await axios.post(`http://localhost:3000/auth/login`,members)
       console.log(response.data)
-      login.value=response.data.login
-      message.value=response.data.message
-      if(login.value){
-        authStore.login()
-        router.push('/pagemember')
-      }
+      login.value=true
+      message.value=`ยินดีต้อนรับ ${response.data.user.name}`
+      authStore.login(response.data.user)
+      router.push('/pagemember')
     }
     catch(err){
       console.log(err)
@@ -124,7 +113,7 @@
 <style scoped>
 .image-placeholder{
   background-color: #1e293b;
-  background-image: url("/src/assets/LogoSRC.png");
+  background-image: url("@/assets/LogoSRC.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

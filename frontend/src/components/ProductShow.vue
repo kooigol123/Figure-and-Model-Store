@@ -24,7 +24,7 @@
                 <div class="col-lg-7 col-md-6">
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <span class="badge text-dark fw-normal px-3 py-2" style="background-color: #f1f5f9; border-radius: 6px;">
-                            {{ pd.category?.cateName || 'สเกลฟิกเกอร์' }}
+                            {{ pd.category?.categoryName || 'สเกลฟิกเกอร์' }}
                         </span>
                         <span class="text-muted fw-semibold" style="font-size: 0.85rem; letter-spacing: 0.5px;">
                             ID {{ String(pd.pdId).padStart(3, '0') }}
@@ -34,7 +34,7 @@
                     <h3 class="fw-bold mb-1">{{ pd.pdName }}</h3>
                     <p class="text-secondary mb-3">{{ pd.brand?.brandName || "Good Smile Company" }}</p>
                     <h3 class="fw-bold mb-4" style="color: #0f172a;">
-                        {{ pd.pdPrice ? pd.pdPrice.toLocaleString() : '0' }} THB
+                        {{ pd.price ? Number(pd.price).toLocaleString() : '0' }} THB
                     </h3>
                     <h6 class="fw-bold mb-2" style="color: #334155;">ข้อมูลสินค้า (Specifications)</h6>
                     <div class="border rounded-3 overflow-hidden mb-3">
@@ -54,11 +54,11 @@
                                 </tr>
                                 <tr class="border-bottom">
                                     <td class="text-muted bg-light px-4 py-2">หมวดหมู่ (Category)</td>
-                                    <td class="px-4 py-2">{{ pd.category?.cateName || 'สเกลฟิกเกอร์' }}</td>
+                                    <td class="px-4 py-2">{{ pd.category?.categoryName || 'สเกลฟิกเกอร์' }}</td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted bg-light px-4 py-2">ราคา (Price)</td>
-                                    <td class="px-4 py-2">{{ pd.pdPrice ? pd.pdPrice.toLocaleString() : '0' }} THB</td>
+                                    <td class="px-4 py-2">{{ pd.price ? Number(pd.price).toLocaleString() : '0' }} THB</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -66,7 +66,7 @@
 
                     <h6 class="fw-bold mb-1" style="color: #334155; font-size: 0.9rem;">รายละเอียดสินค้า (Description)</h6>
                     <p class="text-secondary mb-4" style="font-size: 0.85rem; line-height: 1.5; display: -webkit-box; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                        {{ pd.pdRemark || 'ไม่มีรายละเอียดสินค้า' }}
+                        {{ pd.description || 'ไม่มีรายละเอียดสินค้า' }}
                     </p>
 
                     <hr class=" text-muted" style="opacity: 0.15;">
@@ -101,14 +101,15 @@
     import { useRoute, useRouter } from 'vue-router'
     import axios from 'axios';
     import { useCartStore } from '@/stores/cartStore'
-    axios.defaults.withCredentials = true
+    import { useAuthStore } from '@/stores/authStore'
 
     const route = useRoute()
     const router = useRouter()
+    const authStore = useAuthStore()
     const products=ref([])
     const id=ref(null)
     const login=ref(false)
-    const memEmail=ref(null)
+    const userId=ref(null)
     const cartId=ref(null)
     const backendMessage=ref(null)
     const cartStore = useCartStore()
@@ -119,18 +120,15 @@
         id.value= route.params.pdId
         axios.get(`http://localhost:3000/products/${id.value}`)
         .then(res => {
-        products.value = res.data;
+        products.value = [res.data]; // backend ส่งมาเป็น object เดียว
         })
         .catch(err=>console.log(err.message))
     })
 
     const chkLogin=async()=>{
-        await axios.get(`http://localhost:3000/members/detail`)
-        .then((res)=>{
-            login.value = res.data.login
-            memEmail.value=res.data.memEmail
-        })
-        .catch(err=>console.log(err.message))
+        const user = await authStore.fetchMe()
+        login.value = !!user
+        userId.value = user?.id
 
         if(login.value){
             console.log("Login:"+login.value)
@@ -148,7 +146,7 @@
     const chkCart=async()=>{
         console.log('chkCart')
         let members={
-            memEmail:memEmail.value
+            userId:userId.value
         }
         try{
             const response = await axios.post(`http://localhost:3000/carts/chkcart`,members)
@@ -161,12 +159,11 @@
     const addCart=async ()=>{
         console.log("addCard")
         let customer = {
-            cusId:memEmail.value
+            userId:userId.value
         }
         try{
             const response = await axios.post(`http://localhost:3000/carts/addcart`,customer)
-            backendMessage.value = response.data.messageAddCart
-            cartId.value=response.data.messageAddCart
+            cartId.value=response.data.cartId
             console.log( response.data)
         }
         catch(err){
@@ -179,16 +176,17 @@
         let cartdtl={
             cartId:cartId.value,
             pdId:id.value,
-            pdPrice:products.value[0].pdPrice
-            
+            price:products.value[0].price
         }
         console.log(cartdtl)
         try{
-            const response =await axios.post(`http://localhost:3000/carts/addcartdtl`,cartdtl)
+            // backend เพิ่มทีละ 1 ชิ้น จึงเรียกตามจำนวนที่เลือก
+            for (let i = 0; i < qty.value; i++) {
+                await axios.post(`http://localhost:3000/carts/addcartdtl`,cartdtl)
+            }
             cartStore.updateQty()
             cartStore.setId(cartId.value)
-            backendMessage.value = response.data.messageAddCartDtl
-            console.log( response.data)
+            qty.value = 1
             alert("เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว!")
         }
         catch(err){

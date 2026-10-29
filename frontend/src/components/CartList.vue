@@ -23,8 +23,8 @@
                 </span>
             </td>
             <td>{{ formattedDate(ct.cartDate) }}</td>
-            <td class="text-center">{{ (ct.sqty??0) }}</td>
-            <td class="text-end">{{ (ct.sprice??0).toLocaleString()}}</td>
+            <td class="text-center">{{ Number(ct.total_items??0) }}</td>
+            <td class="text-end">{{ Number(ct.total_amount??0).toLocaleString()}}</td>
             <td class="text-center"><i :class="ct.cartCf ? 'bi bi-check-lg' : 'bi bi-dash'"></i></td>
             <td class="text-center">
                 <i class="bi-x-lg text-danger"></i>
@@ -38,11 +38,13 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from 'axios';
-axios.defaults.withCredentials = true
+import { useAuthStore } from '@/stores/authStore';
+const authStore = useAuthStore()
 
 
 const cart=ref([])//รับข้อมูล Master
 const memEmail=ref(null) //ข้อมูลจาก Cookie ที่ Login
+const userId=ref(null)
 
 
 const formattedDate=(dateStr)=> {
@@ -59,9 +61,7 @@ onMounted(async ()=>{
 
 
 const getCartList=async ()=>{
-    let customer ={ id:memEmail.value} // ทำเป็น Object
-    console.log(customer)
-    await axios.post(`http://localhost:3000/carts/getcartbycus`,customer) // ใช้การ POST
+    await axios.get(`http://localhost:3000/auth/carts/history/${userId.value}`)
         .then(res => {
             cart.value = res.data
         })
@@ -70,11 +70,9 @@ const getCartList=async ()=>{
 
 
 const getMember=async ()=>{
-    await axios.get(`http://localhost:3000/members/detail`)
-        .then((res)=>{
-            memEmail.value=res.data.memEmail
-        })
-        .catch(err=>console.log(err.message))
+    const user = await authStore.fetchMe()
+    userId.value = user?.id
+    memEmail.value = user?.email
 }
 </script>
 <style></style>

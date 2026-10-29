@@ -1,5 +1,5 @@
 <template>
-    <div class="container my-5" v-if="memEmail == cusId">
+    <div class="container my-5" v-if="userId && (!cartId || userId == cusId)">
         <!-- header -->
         <div class="mb-4">
             <p class="text-secondary fw-bold mb-1" style="font-size: 0.85rem; letter-spacing: 1px;">SHOPPING CART</p>
@@ -66,7 +66,7 @@
                             </div>
                         </td>
 
-                        <td class="py-3 px-2 text-end text-muted">{{ (ctd.price ?? 0).toLocaleString() }}</td>
+                        <td class="py-3 px-2 text-end text-muted">{{ Number(ctd.price ?? 0).toLocaleString() }}</td>
                         <td class="py-3 px-2">
                             <div class="input-group input-group-sm mx-auto" style="width: 100px;">
                                 <button class="btn btn-outline-secondary px-2" type="button" @click="updateQty(ctd, -1)">-</button>
@@ -75,7 +75,7 @@
                             </div>
                         </td>
 
-                        <td class="py-3 px-2 text-end fw-semibold text-dark">{{ ((ctd.price * ctd.qty) ?? 0).toLocaleString() }}</td>
+                        <td class="py-3 px-2 text-end fw-semibold text-dark">{{ Number(ctd.subtotal ?? 0).toLocaleString() }}</td>
                         <td class="py-3 px-2 text-center">
                             <button class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center gap-1 mx-auto text-nowrap px-3" style="border-radius: 6px; font-size: 0.85rem;" @click="removeItem(ctd)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
@@ -97,7 +97,7 @@
                         <span class="text-secondary fs-5">จำนวนสินค้า</span>
                         <span class="fw-bold fs-4 text-dark">{{ cart[0].sqty }}</span>
                         <span class="text-secondary fs-5">ชิ้น, ยอดเงิน</span>
-                        <span class="fw-bold fs-3 text-dark">{{ (cart[0].sprice ?? 0).toLocaleString() }}</span>
+                        <span class="fw-bold fs-3 text-dark">{{ Number(cart[0].sprice ?? 0).toLocaleString() }}</span>
                         <span class="text-secondary fs-5">บาท</span>
                     </div>
                     <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.8rem;">
@@ -131,14 +131,17 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router'
 import axios from 'axios';
-axios.defaults.withCredentials = true
+import { useAuthStore } from '@/stores/authStore';
+import { useCartStore } from '@/stores/cartStore';
 
 const route = useRoute()
+const authStore = useAuthStore()
+const cartStore = useCartStore()
 const cart=ref([])
 const cartDtl=ref([])
 const cartId=ref(null)
 const cusId=ref(null)
-const memEmail=ref(null)
+const userId=ref(null)
 
 const formattedDate=(dateStr)=> {
     const date = new Date(dateStr);
@@ -153,7 +156,7 @@ onMounted(async ()=>{
 })
 
 const getActiveCart = async () =>{
-    let members = { memEmail: memEmail.value };
+    let members = { userId: userId.value };
     try{
         const response = await axios.post(`http://localhost:3000/carts/chkcart`, members);
         cartId.value = response.data.cartId;
@@ -165,6 +168,7 @@ const getActiveCart = async () =>{
         else{
             console.log("ไม่มีสินค้าในตะกร้า")
             cart.value = [];
+            cartDtl.value = [];
         }
     }
     catch (err){
@@ -177,8 +181,8 @@ const getCart=async ()=>{
     console.log('Get Cart:'+cartId.value)
     await axios.get(`http://localhost:3000/carts/getcart/${cartId.value}`)
         .then(res => {
-            cart.value = res.data
-            cusId.value = cart.value[0].cusId
+            cart.value = [res.data] // backend ส่งมาเป็น object เดียว
+            cusId.value = res.data.userId
         })
         .catch(err => {  console.error(err); });      
 }
@@ -191,34 +195,55 @@ const getCartDtl=async ()=>{
         .catch(err => {  console.error(err); });      
 }
 const getMember=async ()=>{
-    await axios.get(`http://localhost:3000/members/detail`)
-        .then((res)=>{
-            memEmail.value=res.data.memEmail
-        })
-        .catch(err=>console.log(err.message))
+    const user = await authStore.fetchMe()
+    userId.value = user?.id
 }
 
-const confirmDeleteCart = () => {
+// โหลดตะกร้าใหม่ และแจ้ง cartStore ว่าจำนวนเปลี่ยน
+const reloadCart = async () => {
+    await getActiveCart()
+    cartStore.updateQty()
+}
+
+const confirmDeleteCart = async () => {
+  if(!cartId.value) return
   if(confirm('ยืนยันลบตะกร้าสินค้านี้ทั้งหมด?')) {
-    console.log("Deleted Cart:", cartId.value)
+    try {
+      await axios.delete(`http://localhost:3000/auth/carts/${cartId.value}`)
+      await reloadCart()
+    }
+    catch (err) { alert(err.response?.data?.message || 'ลบตะกร้าไม่สำเร็จ') }
   }
 }
 
-const confirmOrder = () => {
+const confirmOrder = async () => {
   if(confirm('ยืนยันสั่งสินค้า?')) {
-    console.log("Confirmed Order:", cartId.value)
+    try {
+      await axios.post(`http://localhost:3000/auth/carts/confirm`, { cartId: cartId.value })
+      alert('ยืนยันการสั่งซื้อเรียบร้อยแล้ว')
+      await reloadCart()
+    }
+    catch (err) { alert(err.response?.data?.message || 'ยืนยันการสั่งซื้อไม่สำเร็จ') }
   }
 }
 
-const updateQty = (item, amount) => {
+const updateQty = async (item, amount) => {
   if(item.qty + amount > 0) {
-    console.log(`Update ${item.pdId} qty to ${item.qty + amount}`)
+    try {
+      await axios.put(`http://localhost:3000/auth/carts/updateqty`, { cartId: cartId.value, pdId: item.pdId, qty: item.qty + amount })
+      await reloadCart()
+    }
+    catch (err) { console.log(err) }
   }
 }
 
-const removeItem = (item) => {
+const removeItem = async (item) => {
   if(confirm(`ยืนยันลบสินค้า ${item.pdName} ออกจากตะกร้า?`)) {
-    console.log("Remove Item:", item.pdId)
+    try {
+      await axios.delete(`http://localhost:3000/auth/carts/item`, { data: { cartId: cartId.value, pdId: item.pdId } })
+      await reloadCart()
+    }
+    catch (err) { console.log(err) }
   }
 }
 </script>
