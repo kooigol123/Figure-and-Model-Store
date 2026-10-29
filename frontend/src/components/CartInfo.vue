@@ -8,7 +8,8 @@
 <script setup>
     import { onMounted, ref,watch } from 'vue'; // import function ref มาจาก vue
     import axios from 'axios';
-    axios.defaults.withCredentials = true
+    import { useAuthStore } from '@/stores/authStore';
+    const authStore = useAuthStore()
 
 
     import { useRouter } from "vue-router" // เพื่อกำหนดให้ใช้ย้ายหน้า
@@ -17,7 +18,7 @@
     const cartStore = useCartStore()
 
 
-    const memEmail=ref(null) //ข้อมูลผู้ที่ Login อยู่อ่านจาก Cookie getMember()
+    const userId=ref(null) //ข้อมูลผู้ที่ Login อยู่ อ่านจาก /auth/me (cookie) getMember()
     const cartId=ref() //ตะกร้าที่ยังไม่ได้ CF ค่าที่ได้รับจาก chkCart()
     const qty=ref(0) //ค่าที่ได้รับจาก sumCart()
     const money=ref(0) //ค่าที่ได้รับจาก sumCart()
@@ -32,12 +33,12 @@
     onMounted(async ()=>{
         await getMember()
         await chkCart()
-        await sumCart(cartId.value)
+        if (cartId.value) await sumCart(cartId.value)
     })
     // ตรวจสอบตะกร้า
     const chkCart=async ()=>{
         console.log('chkCart')
-        let members={ memEmail:memEmail.value }
+        let members={ userId:userId.value }
         console.log(members)
         try { // Request POST Method
                 const response = await axios.post(`http://localhost:3000/carts/chkcart`,members)
@@ -48,21 +49,19 @@
     }
     // ตรวจสอบ Member
     const getMember=async ()=>{
-        await axios.get(`http://localhost:3000/members/detail`)
-            .then((res)=>{
-                memEmail.value=res.data.memEmail
-            })
-            .catch(err=>console.log(err.message))
+        const user = await authStore.fetchMe()
+        userId.value = user?.id
     }
     // method เพื่อเรียกการคำนวนค่า มีการส่ง parameter cid คือ รหัสตะกร้าที่ส่งมา
     const sumCart=async(cid)=>{
         console.log(`sumCart: ${cid}`)
-        await axios.get(`http://localhost:3000/carts/sumcart/${cid}`)
+        // backend ไม่มี sumcart ใช้ getcart ซึ่งคืน sqty / sprice มาให้แทน
+        await axios.get(`http://localhost:3000/carts/getcart/${cid}`)
         .then(res => {
-            console.log("SumCart: " + res.data.id)
-            cartId.value = res.data.id
-            qty.value = res.data.qty
-            money.value = res.data.money
+            console.log("SumCart: " + res.data.cartId)
+            cartId.value = res.data.cartId
+            qty.value = Number(res.data.sqty)
+            money.value = Number(res.data.sprice)
         })
         .catch(err => { console.error(err);});
     }

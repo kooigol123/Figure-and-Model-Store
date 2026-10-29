@@ -15,8 +15,7 @@
       <div class="col-lg-4 col-md-5">
         <div class="card border-0 shadow-sm text-center pt-5 pb-4 px-4" style="border-radius: 12px;">
           <div class="position-relative d-inline-block mx-auto mb-3">
-            <img v-if="imgOK" :src="`http://localhost:3000/img_mem/${memEmail}.jpg?timestamp=${imageTimestamp}`" alt="Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 140px; height: 140px; border: 4px solid white;">
-            <img v-else src="http://localhost:3000/img_mem/default.jpg" alt="Default Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 140px; height: 140px; border: 4px solid white;">
+            <img :src="authStore.avatarUrl" @error="e => e.target.src = authStore.defaultAvatar" alt="Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 140px; height: 140px; border: 4px solid white;">
           </div>
           
           <h4 class="fw-bold text-dark mb-1">{{ memName }}</h4>
@@ -78,12 +77,12 @@
             <label class="form-label text-secondary fw-semibold mb-2" style="font-size: 0.85rem;">รูปโปรไฟล์ (Profile Picture)</label>
             <div class="bg-light rounded-3 p-3 mb-2 border">
               <div class="d-flex align-items-center gap-4">
-                <img v-if="imgOK" :src="`http://localhost:3000/img_mem/${memEmail}.jpg?timestamp=${imageTimestamp}`" alt="Current Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 70px; height: 70px;">
-                <img v-else src="http://localhost:3000/img_mem/default.jpg" alt="Default Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 70px; height: 70px;">
-                
+                <img v-if="previewUrl" :src="previewUrl" alt="New Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 70px; height: 70px;">
+                <img v-else :src="authStore.avatarUrl" @error="e => e.target.src = authStore.defaultAvatar" alt="Current Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 70px; height: 70px;">
+
                 <div class="flex-grow-1">
-                  <p class="mb-2 fw-semibold" style="font-size: 0.9rem;">รูปปัจจุบัน</p>
-                  <form @submit.prevent="uploadFile()" class="d-flex align-items-center gap-2">
+                  <p class="mb-2 fw-semibold" style="font-size: 0.9rem;">{{ previewUrl ? 'รูปใหม่ (กดบันทึกเพื่อใช้รูปนี้)' : 'รูปปัจจุบัน' }}</p>
+                  <div class="d-flex align-items-center gap-2">
                     <label for="fileUpload" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 px-3 bg-white" style="cursor: pointer; border-radius: 6px;">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16">
                         <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
@@ -91,20 +90,18 @@
                       </svg>
                       เลือกไฟล์
                     </label>
-                    <input type="file" id="fileUpload" class="d-none" @change="onFileChange" accept="image/jpeg, image/png">
+                    <input type="file" id="fileUpload" ref="fileInput" class="d-none" @change="onFileChange" accept="image/jpeg, image/png">
                     <span class="text-muted" style="font-size: 0.8rem;" v-if="!file">ยังไม่ได้เลือกไฟล์</span>
                     <span class="text-dark fw-semibold" style="font-size: 0.8rem;" v-else>{{ file.name }}</span>
-                    
-                    <button type="submit" class="btn btn-sm btn-dark ms-2 px-3" v-if="file" style="border-radius: 6px;">อัปโหลด</button>
-                  </form>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <p class="text-muted mb-4" style="font-size: 0.75rem;">รองรับไฟล์ JPG หรือ PNG รูปสี่เหลี่ยมจัตุรัสจะแสดงผลได้ดีที่สุด</p>
-            
-            <div v-if="fileMessage" :class="['alert', fileMessage.includes('สำเร็จ') ? 'alert-success' : 'alert-danger', 'py-2', 'small']">
-              {{ fileMessage }}
+            <p class="text-muted mb-4" style="font-size: 0.75rem;">รองรับไฟล์ JPG หรือ PNG ขนาดไม่เกิน 2MB รูปสี่เหลี่ยมจัตุรัสจะแสดงผลได้ดีที่สุด</p>
+
+            <div v-if="saveMessage" :class="['alert', saveOK ? 'alert-success' : 'alert-danger', 'py-2', 'small']">
+              {{ saveMessage }}
             </div>
 
             <div class="row g-3">
@@ -112,7 +109,7 @@
                 <label class="form-label text-secondary fw-semibold mb-1" style="font-size: 0.85rem;">ชื่อ (Name) <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-person"></i></span>
-                  <input type="text" class="form-control border-start-0 ps-0 text-dark" v-model="memName" readonly>
+                  <input type="text" class="form-control border-start-0 ps-0 text-dark" v-model="editName" maxlength="100">
                 </div>
               </div>
               <div class="col-md-6">
@@ -127,11 +124,12 @@
             <hr class="text-muted opacity-25 my-4">
 
             <div class="d-flex justify-content-end gap-2">
-              <button type="button" class="btn btn-light text-secondary border px-4" style="border-radius: 8px;">
+              <button type="button" class="btn btn-light text-secondary border px-4" style="border-radius: 8px;" @click="resetForm" :disabled="saving || !isDirty">
                 <i class="bi bi-arrow-counterclockwise me-1"></i> ยกเลิกการแก้ไข
               </button>
-              <button type="button" class="btn btn-orange px-4 text-white fw-semibold shadow-sm" style="border-radius: 8px;" @click="alert('ระบบกำลังพัฒนาส่วนแก้ไขข้อมูล')">
-                <i class="bi bi-save me-1"></i> บันทึกข้อมูล
+              <button type="button" class="btn btn-orange px-4 text-white fw-semibold shadow-sm" style="border-radius: 8px;" @click="saveProfile" :disabled="saving || !isDirty">
+                <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+                <i v-else class="bi bi-save me-1"></i> บันทึกข้อมูล
               </button>
             </div>
           </div>
@@ -142,22 +140,30 @@
 </template>
 
 <script setup>
-    import { onMounted, ref } from 'vue';
+    import { computed, onMounted, ref } from 'vue';
     import axios from 'axios';
-    axios.defaults.withCredentials=true
+    import { useAuthStore } from '@/stores/authStore';
+
+    const authStore = useAuthStore()
 
     const member=ref(null)
     const memEmail=ref(null)
     const memName=ref(null)
     const dutyId=ref(null)
     const login=ref(false)
-    const imgOK=ref(false)
-    const fileMessage=ref(null)
     const file=ref(null)
-    const imageTimestamp=ref(Date.now())
+    const fileInput=ref(null)
+    const previewUrl=ref(null)
+    const editName=ref('')
+    const saving=ref(false)
+    const saveMessage=ref(null)
+    const saveOK=ref(false)
 
-    const memberId = ref('M002');
-    const joinDate = ref('2024-08-12');
+    // มีอะไรเปลี่ยนจากข้อมูลเดิมไหม (ใช้เปิด/ปิดปุ่มบันทึก)
+    const isDirty = computed(() => !!file.value || editName.value.trim() !== (memName.value || ''))
+
+    const memberId = ref(null);
+    const joinDate = ref(null);
     const totalOrders = ref(0);
 
     const formattedDate = (dateStr) => {
@@ -172,37 +178,26 @@
     onMounted(async()=>{
         await getMember()
         if(login.value){
-            await chkImage()
             await getOrderCount()
         }
     })
 
     const getMember=async()=>{
-        await axios.get(`http://localhost:3000/members/detail`)
-        .then((res)=>{
-            member.value=res.data
-            memEmail.value=member.value.memEmail
-            memName.value=member.value.memName
-            dutyId.value=member.value.dutyId
-            login.value=member.value.login
-        })
-        .catch(err=>console.log(err.message))
-    }
-
-    const chkImage=async()=>{
-        const image = new Image()
-        image.src = `http://localhost:3000/img_mem/${memEmail.value}.jpg`
-        image.onload = () =>{
-            imgOK.value = true
-        }
-        image.onerror=()=>{
-            imgOK.value=false
+        member.value = await authStore.fetchMe()
+        login.value = !!member.value
+        if(login.value){
+            memEmail.value=member.value.email
+            memName.value=member.value.name
+            editName.value=member.value.name
+            dutyId.value=member.value.role
+            memberId.value=member.value.id
+            joinDate.value=member.value.created_at
         }
     }
 
     const getOrderCount = async () => {
         try {
-            const res = await axios.post(`http://localhost:3000/carts/getcartbycus`, { id: memEmail.value });
+            const res = await axios.get(`http://localhost:3000/auth/carts/history/${memberId.value}`);
             totalOrders.value = res.data.length;
         } 
         catch (err) {
@@ -210,31 +205,68 @@
         }
     }
 
-    const onFileChange=async(e)=>{
-        file.value=e.target.files[0]
-        fileMessage.value = null
-    }
-
-    const uploadFile=async()=>{
-        if(!file.value){
-            fileMessage.value="เลือก File เพื่อ Upload"
+    // เลือกไฟล์แล้วแสดงตัวอย่างก่อน ยังไม่อัปโหลดจนกว่าจะกดบันทึก
+    const onFileChange=(e)=>{
+        const f = e.target.files[0]
+        saveMessage.value = null
+        if(!f) return
+        if(!['image/jpeg', 'image/png'].includes(f.type) || f.size > 2 * 1024 * 1024){
+            saveOK.value = false
+            saveMessage.value = "รองรับเฉพาะไฟล์ JPG หรือ PNG ขนาดไม่เกิน 2MB"
+            e.target.value = ''
             return
         }
+        if(previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+        file.value = f
+        previewUrl.value = URL.createObjectURL(f)
+    }
 
-        const formData = new FormData()
-        formData.append("memEmail",memEmail.value)
-        formData.append("file",file.value)
+    const clearFile=()=>{
+        if(previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+        previewUrl.value = null
+        file.value = null
+        if(fileInput.value) fileInput.value.value = ''
+    }
 
-        try{
-            const response=await axios.post("http://localhost:3000/members/uploadImg", formData, {
-                headers:{"Content-Type": "multipart/form-data"}
-            })
-            fileMessage.value=response.data.message
-            await chkImage()
-            imageTimestamp.value = Date.now()
-            file.value = null
+    const resetForm=()=>{
+        clearFile()
+        editName.value = memName.value
+        saveMessage.value = null
+    }
+
+    const saveProfile=async()=>{
+        const name = editName.value.trim()
+        if(!name){
+            saveOK.value = false
+            saveMessage.value = "กรุณากรอกชื่อ"
+            return
         }
-        catch(err) { fileMessage.value="Upload ไม่สำเร็จ"}
+        saving.value = true
+        saveMessage.value = null
+        try{
+            if(file.value){
+                const formData = new FormData()
+                formData.append("file", file.value)
+                await axios.post(`http://localhost:3000/auth/me/avatar`, formData)
+                authStore.refreshAvatar() // navbar และหน้านี้โหลดรูปใหม่ทันที
+                clearFile()
+            }
+            if(name !== memName.value){
+                const res = await axios.put(`http://localhost:3000/auth/me`, { name })
+                authStore.login(res.data) // อัปเดต user ใน store → navbar เปลี่ยนชื่อทันที
+                memName.value = res.data.name
+                editName.value = res.data.name
+            }
+            saveOK.value = true
+            saveMessage.value = "บันทึกข้อมูลสำเร็จ"
+        }
+        catch(err){
+            saveOK.value = false
+            saveMessage.value = err.response?.data?.message || "บันทึกข้อมูลไม่สำเร็จ"
+        }
+        finally{
+            saving.value = false
+        }
     }
 
 </script>
