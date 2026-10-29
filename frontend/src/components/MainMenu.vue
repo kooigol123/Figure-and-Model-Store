@@ -26,7 +26,7 @@
           <li class="nav-item">
             <router-link to="/cart" class="nav-link custom-nav-link fw-semibold text-decoration-none d-flex align-items-center gap-2">
               Cart
-              <span class="badge rounded-pill text-dark" style="background-color: #f1f5f9;">0</span>
+              <span class="badge rounded-pill text-dark" style="background-color: #f1f5f9;">{{ cartCount }}</span>
             </router-link>
           </li>
           <li class="nav-item">
@@ -47,8 +47,7 @@
               <router-link to="/pagemember" class="text-decoration-none">
                 <div class="profile-badge border rounded-pill p-1 pe-3 d-flex align-items-center gap-2">
                   <template v-if="login">
-                    <img v-if="imgOK" :src="`http://localhost:3000/img_mem/${memEmail}.jpg?timestamp=${imageTimestamp}`" alt="Profile" class="rounded-circle object-fit-cover" width="36" height="36">
-                    <img v-else :src="`http://localhost:3000/img_mem/default.jpg`" alt="Profile" class="rounded-circle object-fit-cover" width="36" height="36">
+                    <img :src="authStore.avatarUrl" @error="e => e.target.src = authStore.defaultAvatar" alt="Profile" class="rounded-circle object-fit-cover" width="36" height="36">
                     <div class="d-flex flex-column lh-1 justify-content-center mt-1">
                       <span class="fw-bold text-dark" style="font-size: 0.9rem;">{{ memName }}</span>
                       <span v-if="dutyId === 'admin'" class="text-danger fw-bold" style="font-size: 0.75rem;">
@@ -76,7 +75,7 @@
             </li>
 
             <li class="nav-item" v-if="login">
-              <a href="#" @click="memLogout()" class="nav-link text-secondary fw-semibold d-flex align-items-center gap-1 logout-link">
+              <a href="#" @click.prevent="memLogout()" class="nav-link text-secondary fw-semibold d-flex align-items-center gap-1 logout-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
                   <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
                   <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
@@ -103,10 +102,10 @@
 <script setup>
   import { onMounted, ref, watch } from "vue";
   import axios from "axios";
+  import { useCartStore } from "@/stores/cartStore";
   import { useRouter } from "vue-router";
   import { useAuthStore } from "@/stores/authStore";
   import CartInfo from './CartInfo.vue';
-  axios.defaults.withCredentials = true;
 
   const authStore = useAuthStore()
   const router = useRouter()
@@ -115,56 +114,60 @@
   const memName = ref(null);
   const dutyId = ref(null);
   const login = ref(false)
-  const imgOK = ref(false)
-  const imageTimestamp = ref(Date.now())
+  const cartStore = useCartStore()
+  const cartCount = ref(0)
 
+  // จำนวนชิ้นรวมในตะกร้าที่ยังไม่ยืนยัน (sqty จาก /carts/getcart)
+  const getCartCount = async () => {
+    if (!authStore.user) {
+      cartCount.value = 0
+      return
+    }
+    try {
+      const resChk = await axios.post(`http://localhost:3000/carts/chkcart`, { userId: authStore.user.id })
+      if (!resChk.data.cartId) {
+        cartCount.value = 0
+        return
+      }
+      const resCart = await axios.get(`http://localhost:3000/carts/getcart/${resChk.data.cartId}`)
+      cartCount.value = Number(resCart.data.sqty || 0)
+    }
+    catch (err) {
+      console.log(err.message)
+    }
+  }
+
+  // หน้าอื่นเรียก cartStore.updateQty() ทุกครั้งที่ตะกร้าเปลี่ยน
+  watch(() => cartStore.theQty, () => getCartCount())
+
+  // เมื่อ login / logout ที่หน้าอื่น ให้เมนูอัปเดตตาม
   watch(
-    () => authStore.isLogin, () =>{
+    () => authStore.user, () =>{
       console.log("Watch")
-      getMember()
+      setMember()
     }
   )
 
   onMounted(async () => {
-    await getMember();
+    await authStore.fetchMe();
+    setMember();
   });
 
-  const getMember = async () => {
-  await axios
-    .get(`http://localhost:3000/members/detail`)
-    .then((res) => {
-      member.value = res.data;
-      memEmail.value = member.value.memEmail;
-      memName.value = member.value.memName;
-      dutyId.value = member.value.dutyId;
-      login.value = member.value.login
+  const setMember = () => {
+    member.value = authStore.user;
+    memEmail.value = member.value?.email;
+    memName.value = member.value?.name;
+    dutyId.value = member.value?.role;
+    login.value = authStore.isLogin
 
-      if(login.value && memEmail.value){
-        chkImage()
-      }
-    })
-    .catch((err) => console.log(err.message));
-  }
-
-  const chkImage =async()=>{
-    const image = new Image()
-    image.src = `http://localhost:3000/img_mem/${memEmail.value}.jpg`
-    image.onload = () =>{
-      imgOK.value = true
-    }
-    image.onerror = () =>{
-      imgOK.value = false
-    }
+    getCartCount()
   }
 
   const memLogout = async()=>{
     const cf = window.confirm("ต้องการออกจากระบบ?")
     if(cf){
       try{
-        console.log(authStore.isLogin);
-        const response = await axios.get(`http://localhost:3000/members/logout`)
-        getMember()
-        authStore.logout()
+        await authStore.logout()
         router.push("/")
       }
       catch(err){

@@ -13,7 +13,7 @@
                         </div>
                         <h3 class="fw-bold mb-2">Model Store</h3>
                         <p class="small mb-0 text-light opacity-75">
-                            เข้าสู่ระบบเพื่อสั่งซื้อสินค้า ติดตามประวัติการสั่งซื้อ และจัดการข้อมูลส่วนตัวของคุณ
+                            สมัครสมาชิกเพื่อสั่งซื้อสินค้า ติดตามประวัติการสั่งซื้อ และจัดการข้อมูลส่วนตัวของคุณ
                         </p>
                     </div>
                 </div>
@@ -32,22 +32,22 @@
 
                     <form @submit.prevent="handleSubmit()">
                         <div class="mb-3">
-                            <label for="memName" class="form-label small fw-bold">ชื่อ-นามสกุล (Name) <span class="text-danger">*</span></label>
+                            <label for="name" class="form-label small fw-bold">ชื่อ-นามสกุล (Name) <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white text-muted border-end-0">
                                 <i class="bi bi-person"></i>
                                 </span>
-                                <input class="form-control border-start-0 ps-0 custom-input" type="text" id="memName" autocomplete="off" required placeholder="เช่น ณัฐวุฒิ วงศ์ใหญ่" v-model="memName">
+                                <input class="form-control border-start-0 ps-0 custom-input" type="text" id="name" autocomplete="off" required placeholder="เช่น ณัฐวุฒิ วงศ์ใหญ่" v-model="name">
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="memEmail" class="form-label small fw-bold">อีเมล (Email) <span class="text-danger">*</span></label>
+                            <label for="email" class="form-label small fw-bold">อีเมล (Email) <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white text-muted border-end-0">
                                 <i class="bi bi-envelope"></i>
                                 </span>
-                                <input class="form-control border-start-0 ps-0 custom-input" type="email" id="memEmail" autocomplete="off" required placeholder="name@student.ac.th" v-model.trim="memEmail">
+                                <input class="form-control border-start-0 ps-0 custom-input" type="email" id="email" autocomplete="off" required placeholder="name@student.ac.th" v-model.trim="email">
                             </div>
                         </div>
 
@@ -57,12 +57,14 @@
                                 <span class="input-group-text bg-white text-muted border-end-0">
                                 <i class="bi bi-lock"></i>
                                 </span>
-                                <input class="form-control border-start-0 ps-0 custom-input" type="password" id="password" autocomplete="off" required placeholder="••••••" v-model="password">
+                                <input class="form-control border-start-0 ps-0 custom-input" type="password" id="password" autocomplete="new-password" required minlength="8" placeholder="••••••••" v-model="password">
                             </div>
-                            <div class="form-text small text-muted" style="font-size: 0.75rem;">อย่างน้อย 6 ตัวอักษร</div>
+                            <div class="form-text small text-muted" style="font-size: 0.75rem;">อย่างน้อย 8 ตัวอักษร</div>
                         </div>
-                        <button class="btn btn-orange w-100 py-2 fw-bold text-white rounded-3 shadow-sm" type="submit">
-                            <i class="bi bi-person-plus-fill"></i> สมัครสมาชิก
+                        <button class="btn btn-orange w-100 py-2 fw-bold text-white rounded-3 shadow-sm" type="submit" :disabled="isLoading">
+                            <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <i v-else class="bi bi-person-plus-fill me-1"></i> 
+                            {{ isLoading ? 'กำลังสมัครสมาชิก...' : 'สมัครสมาชิก' }}
                         </button>
                     </form>
 
@@ -81,28 +83,45 @@
 <script setup>
     import { ref } from 'vue';
     import axios from 'axios';
+    import { useRouter } from 'vue-router';
 
-    const memEmail=ref(null)
-    const memName=ref(null)
-    const password=ref(null)
+    const email=ref('')
+    const name=ref('')
+    const password=ref('')
     const regist=ref(null)
     const message=ref(null)
+    const router = useRouter()
+    const isLoading = ref(false)
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
     const handleSubmit =async()=>{
-        let members={
-            memEmail:memEmail.value,
-            memName:memName.value,
-            password:password.value
+        const payload = {
+            email: email.value,
+            name: name.value,
+            password: password.value
         }
         try {
-            const response = await axios.post(`http://localhost:3000/members`,members)
-            console.log(response.data)
-            regist.value=response.data.regist
-            message.value=response.data.message
+            isLoading.value = true
+            regist.value = null
+            message.value = null
+            const response = await axios.post(`${API_URL}/auth/register`, payload)
+
+            if (response.status === 201) {
+                regist.value = true
+                message.value = "กำลังพาไปหน้าเข้าสู่ระบบ..."
+                email.value = ''
+                name.value = ''
+                password.value = ''
+                setTimeout(() => router.push('/login'), 1500)
+            }
         }
         catch(err){
             console.log(err)
+            regist.value = false;
             message.value = err.response?.data?.message || "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้"
+        }
+        finally{
+            isLoading.value = false
         }
     }
 
@@ -112,7 +131,7 @@
 
 .image-placeholder {
   background-color: #1e293b; 
-  background-image: url("/src/assets/LogoSRC.png");
+  background-image: url("@/assets/LogoSRC.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
