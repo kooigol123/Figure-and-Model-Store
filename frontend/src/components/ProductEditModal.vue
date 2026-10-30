@@ -87,7 +87,7 @@
                                 </label>
                                 <span class="small text-truncate" :class="file ? 'text-dark fw-semibold' : 'text-muted'">{{ file ? file.name : 'ยังไม่ได้เลือกไฟล์' }}</span>
                             </div>
-                            <div class="text-muted" style="font-size: 0.75rem;">รองรับไฟล์ JPG หรือ PNG ขนาดแนะนำ 1:1 (ไม่เกิน 2MB)</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">รองรับไฟล์ JPG หรือ PNG ขนาดแนะนำ 1:1</div>
                         </div>
                     </div>
 
@@ -177,8 +177,8 @@ const onFileChange = (e) => {
     const f = e.target.files[0]
     errorMessage.value = null
     if (!f) return
-    if (!['image/jpeg', 'image/png'].includes(f.type) || f.size > 2 * 1024 * 1024) {
-        errorMessage.value = "รองรับเฉพาะไฟล์ JPG หรือ PNG ขนาดไม่เกิน 2MB"
+    if (!['image/jpeg', 'image/png'].includes(f.type)) {
+        errorMessage.value = "รองรับเฉพาะไฟล์ JPG หรือ PNG"
         e.target.value = ''
         return
     }

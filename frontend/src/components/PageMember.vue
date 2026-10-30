@@ -98,7 +98,7 @@
               </div>
             </div>
             
-            <p class="text-muted mb-4" style="font-size: 0.75rem;">รองรับไฟล์ JPG หรือ PNG ขนาดไม่เกิน 2MB รูปสี่เหลี่ยมจัตุรัสจะแสดงผลได้ดีที่สุด</p>
+            <p class="text-muted mb-4" style="font-size: 0.75rem;">รองรับไฟล์ JPG หรือ PNGรองรับไฟล์ JPG หรือ PNG รูปสี่เหลี่ยมจัตุรัสจะแสดงผลได้ดีที่สุด</p>
 
             <div v-if="saveMessage" :class="['alert', saveOK ? 'alert-success' : 'alert-danger', 'py-2', 'small']">
               {{ saveMessage }}
@@ -210,9 +210,9 @@
         const f = e.target.files[0]
         saveMessage.value = null
         if(!f) return
-        if(!['image/jpeg', 'image/png'].includes(f.type) || f.size > 2 * 1024 * 1024){
+        if(!['image/jpeg', 'image/png'].includes(f.type)){
             saveOK.value = false
-            saveMessage.value = "รองรับเฉพาะไฟล์ JPG หรือ PNG ขนาดไม่เกิน 2MB"
+            saveMessage.value = "รองรับเฉพาะไฟล์ JPG หรือ PNG"
             e.target.value = ''
             return
         }
