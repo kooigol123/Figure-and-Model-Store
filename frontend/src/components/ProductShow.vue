@@ -17,7 +17,7 @@
             <div class="row g-5 align-items-start">
                 <!-- ฝั่งซ้าย: รูปภาพสินค้าทรงสี่เหลี่ยมจัตุรัสตาม Figma -->
                 <div class="col-lg-6 col-md-6 col-sm-12">
-                    <div class="product-detail-img-box rounded-4 overflow-hidden position-relative"
+                    <div class="product-detail-img-box rounded-4 overflow-hidden"
                          @click="showImageModal = true"
                          role="button"
                          title="คลิกเพื่อดูภาพขนาดเต็ม">
@@ -25,13 +25,26 @@
                              @error="$event.target.onerror = null; $event.target.src='http://localhost:3000/img_pd/default.jpg'"
                              alt="Product Image"
                              class="product-detail-img">
-                        <div class="image-zoom-badge">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.03 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z"/>
-                            </svg>
-                            <span>คลิกดูภาพเต็ม</span>
-                        </div>
                     </div>
+
+                    <!-- Modal ดูภาพขนาดเต็ม (Lightbox) -->
+                    <teleport to="body">
+                        <div v-if="showImageModal" class="image-lightbox-overlay" @click.self="showImageModal = false">
+                            <div class="image-lightbox-container">
+                                <button type="button" class="image-lightbox-close" @click="showImageModal = false" aria-label="ปิด">
+                                    ✕
+                                </button>
+                                <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
+                                     @error="$event.target.onerror = null; $event.target.src='http://localhost:3000/img_pd/default.jpg'"
+                                     :alt="pd.pdName"
+                                     class="image-lightbox-img" />
+                                <div class="image-lightbox-caption">
+                                    <span class="fw-bold">{{ pd.pdName }}</span>
+                                    <span v-if="pd.brand?.brandName" class="text-white-50 ms-2">({{ pd.brand.brandName }})</span>
+                                </div>
+                            </div>
+                        </div>
+                    </teleport>
                 </div>
 
                 <!-- ฝั่งขวา: รายละเอียดสินค้าตาม Figma -->
@@ -237,10 +250,9 @@
     aspect-ratio: 1 / 1;
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     border-radius: 20px;
+    overflow: hidden;
+    cursor: zoom-in;
 }
 
 .product-detail-img {
@@ -248,6 +260,7 @@
     height: 100%;
     object-fit: cover;
     object-position: center;
+    display: block;
     transition: transform 0.3s ease;
 }
 
@@ -377,32 +390,7 @@
     box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
 }
 
-.product-detail-img-box {
-    cursor: zoom-in;
-}
 
-.image-zoom-badge {
-    position: absolute;
-    bottom: 12px;
-    right: 12px;
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(4px);
-    color: #ffffff;
-    font-size: 0.75rem;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    opacity: 0.85;
-    transition: all 0.2s ease;
-    pointer-events: none;
-}
-
-.product-detail-img-box:hover .image-zoom-badge {
-    background: rgba(15, 23, 42, 0.9);
-    opacity: 1;
-}
 
 .image-lightbox-overlay {
     position: fixed;

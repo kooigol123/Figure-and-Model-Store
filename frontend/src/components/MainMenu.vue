@@ -22,7 +22,7 @@
           <li class="nav-item">
             <router-link to="/cart" class="nav-link custom-nav-link fw-semibold text-decoration-none d-flex align-items-center gap-2">
               Cart
-              <span class="badge rounded-pill text-dark" style="background-color: #f1f5f9;">{{ cartCount }}</span>
+              <span class="badge rounded-pill text-white" style="background-color: #F97316;">{{ cartCount }}</span>
             </router-link>
           </li>
           <li class="nav-item">
