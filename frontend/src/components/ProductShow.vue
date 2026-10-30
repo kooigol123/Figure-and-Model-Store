@@ -17,11 +17,20 @@
             <div class="row g-5 align-items-start">
                 <!-- ฝั่งซ้าย: รูปภาพสินค้าทรงสี่เหลี่ยมจัตุรัสตาม Figma -->
                 <div class="col-lg-6 col-md-6 col-sm-12">
-                    <div class="product-detail-img-box rounded-4 overflow-hidden">
+                    <div class="product-detail-img-box rounded-4 overflow-hidden position-relative"
+                         @click="showImageModal = true"
+                         role="button"
+                         title="คลิกเพื่อดูภาพขนาดเต็ม">
                         <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`"
                              @error="$event.target.onerror = null; $event.target.src='http://localhost:3000/img_pd/default.jpg'"
                              alt="Product Image"
                              class="product-detail-img">
+                        <div class="image-zoom-badge">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.03 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z"/>
+                            </svg>
+                            <span>คลิกดูภาพเต็ม</span>
+                        </div>
                     </div>
                 </div>
 
@@ -102,7 +111,7 @@
 </template>
 
 <script setup>
-    import { onMounted, ref } from 'vue';
+    import { onMounted, onUnmounted, ref } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import axios from 'axios';
     import { useCartStore } from '@/stores/cartStore';
@@ -119,6 +128,17 @@
     const cartStore = useCartStore();
 
     const qty = ref(1);
+    const showImageModal = ref(false);
+
+    const onKeydown = (e) => {
+        if (e.key === 'Escape' && showImageModal.value) {
+            showImageModal.value = false;
+        }
+    };
+
+    onUnmounted(() => {
+        window.removeEventListener('keydown', onKeydown);
+    });
 
     const cleanCategory = (catName) => {
         if (!catName) return 'สเกลฟิกเกอร์';
@@ -126,6 +146,7 @@
     };
 
     onMounted(async () => {
+        window.addEventListener('keydown', onKeydown);
         id.value = route.params.pdId;
         axios.get(`http://localhost:3000/products/${id.value}`)
             .then(res => {
@@ -354,5 +375,95 @@
 .btn-cart:hover {
     background-color: #ea580c;
     box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+}
+
+.product-detail-img-box {
+    cursor: zoom-in;
+}
+
+.image-zoom-badge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(4px);
+    color: #ffffff;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    opacity: 0.85;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.product-detail-img-box:hover .image-zoom-badge {
+    background: rgba(15, 23, 42, 0.9);
+    opacity: 1;
+}
+
+.image-lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(6px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.image-lightbox-container {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.image-lightbox-close {
+    position: absolute;
+    top: -44px;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #ffffff;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.image-lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.05);
+}
+
+.image-lightbox-img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    background-color: #0f172a;
+}
+
+.image-lightbox-caption {
+    margin-top: 0.75rem;
+    color: #f8fafc;
+    font-size: 0.95rem;
+    text-align: center;
 }
 </style>
