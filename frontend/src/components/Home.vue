@@ -166,12 +166,12 @@ import CategoryManageModal from './CategoryManageModal.vue';
     const productImg = (pd) => `http://localhost:3000/img_pd/${pd.pdId}.jpg?v=${imgVersion.value}`
 
     const onCategoryUpdated = () => {
-        getCategories()
-        getProducts()
+        fetchCategories()
+        fetchAllProducts()
     }
 
     const onProductSaved = (updated, imageChanged, isNew) => {
-        getCategories()
+        fetchCategories()
         if (isNew) {
             products.value = [...products.value, updated]
         } else {
