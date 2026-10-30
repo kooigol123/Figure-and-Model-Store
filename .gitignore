@@ -177,3 +177,8 @@ frontend/dist/
 backend/img_pd/*
 backend/img_mem/*
 
+!backend/img_pd/001.jpg
+!backend/img_pd/002.jpg
+!backend/img_pd/003.jpg
+!backend/img_pd/004.jpg
+!backend/img_mem/default.jpg
