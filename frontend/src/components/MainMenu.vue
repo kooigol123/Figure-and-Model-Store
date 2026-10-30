@@ -103,76 +103,91 @@
   import { useAuthStore } from "@/stores/authStore";
   import CartInfo from './CartInfo.vue';
 
-  const authStore = useAuthStore()
-  const router = useRouter()
+  const authStore = useAuthStore();
+  const router = useRouter();
+  const cartStore = useCartStore();
+
   const member = ref(null);
   const memEmail = ref(null);
   const memName = ref(null);
   const dutyId = ref(null);
-  const login = ref(false)
-  const cartStore = useCartStore()
-  const cartCount = ref(0)
+  const login = ref(false);
+  const cartCount = ref(0);
+
+  let isFetchingCart = false;
 
   // จำนวนชิ้นรวมในตะกร้าที่ยังไม่ยืนยัน (sqty จาก /carts/getcart)
   const getCartCount = async () => {
-    if (!authStore.user) {
-      cartCount.value = 0
-      return
+    // ถ้าไม่มี userId หรือคำขอก่อนหน้ายังทำงานไม่เสร็จ ให้ข้ามทันที
+    if (!authStore.user?.id || isFetchingCart) {
+      if (!authStore.user?.id) cartCount.value = 0;
+      return;
     }
+
+    isFetchingCart = true;
     try {
-      const resChk = await axios.post(`http://localhost:3000/carts/chkcart`, { userId: authStore.user.id })
-      if (!resChk.data.cartId) {
-        cartCount.value = 0
-        return
+      const resChk = await axios.post(`http://localhost:3000/carts/chkcart`, { userId: authStore.user.id });
+      if (!resChk.data?.cartId) {
+        cartCount.value = 0;
+        return;
       }
-      const resCart = await axios.get(`http://localhost:3000/carts/getcart/${resChk.data.cartId}`)
-      cartCount.value = Number(resCart.data.sqty || 0)
+      const resCart = await axios.get(`http://localhost:3000/carts/getcart/${resChk.data.cartId}`);
+      cartCount.value = Number(resCart.data?.sqty || 0);
+    } catch (err) {
+      console.error(err.message);
+    } finally {
+      isFetchingCart = false;
     }
-    catch (err) {
-      console.log(err.message)
-    }
-  }
+  };
 
-  // หน้าอื่นเรียก cartStore.updateQty() ทุกครั้งที่ตะกร้าเปลี่ยน
-  watch(() => cartStore.theQty, () => getCartCount())
-
-  // เมื่อ login / logout ที่หน้าอื่น ให้เมนูอัปเดตตาม
-  watch(
-    () => authStore.user, () =>{
-      console.log("Watch")
-      setMember()
-    }
-  )
-
-  onMounted(async () => {
-    await authStore.fetchMe();
-    setMember();
-  });
-
-  const setMember = () => {
+  const syncMemberData = () => {
     member.value = authStore.user;
     memEmail.value = member.value?.email;
     memName.value = member.value?.name;
     dutyId.value = member.value?.role;
-    login.value = authStore.isLogin
+    login.value = authStore.isLogin;
+  };
 
-    getCartCount()
-  }
-
-  const memLogout = async()=>{
-    const cf = window.confirm("ต้องการออกจากระบบ?")
-    if(cf){
-      try{
-        await authStore.logout()
-        router.push("/")
-      }
-      catch(err){
-        console.log(err)
+  // ดักจับเฉพาะ ID: ถ้า ID เดิมไม่เปลี่ยน จะไม่ยิง API ซ้ำเด็ดขาด
+  watch(
+    () => authStore.user?.id,
+    (newId, oldId) => {
+      syncMemberData();
+      if (newId && newId !== oldId) {
+        getCartCount();
+      } else if (!newId) {
+        cartCount.value = 0;
       }
     }
-  }
+  );
 
+  // ดักจับเมื่อหน้าอื่นสั่งอัปเดตจำนวนสินค้า
+  watch(
+    () => cartStore.theQty,
+    () => {
+      getCartCount();
+    }
+  );
 
+  onMounted(async () => {
+    // ถ้ายังไม่มี user ใน store ให้ดึงข้อมูล session
+    if (!authStore.user) {
+      await authStore.fetchMe();
+    }
+    syncMemberData();
+  });
+
+  const memLogout = async () => {
+    const cf = window.confirm("ต้องการออกจากระบบ?");
+    if (cf) {
+      try {
+        await authStore.logout();
+        router.push("/");
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
 </script>
 
 <style scoped>
