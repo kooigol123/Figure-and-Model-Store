@@ -55,27 +55,11 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <label class="form-label small fw-bold mb-0">หมวดหมู่ (Category)</label>
-                                        <button type="button" class="btn btn-link p-0 text-orange text-decoration-none" style="font-size: 0.75rem;" @click="toggleAddCategory">
-                                            {{ isCustomCategory ? 'เลือกจากรายการ' : '+ เพิ่มหมวดหมู่ใหม่' }}
-                                        </button>
-                                    </div>
-                                    <template v-if="isCustomCategory">
-                                        <input type="text" class="form-control custom-input" v-model="form.categoryName" list="categoryOptions" maxlength="100" placeholder="พิมพ์ชื่อหมวดหมู่ใหม่...">
-                                        <datalist id="categoryOptions">
-                                            <option v-for="c in categories" :key="c.categoryId" :value="c.categoryName"></option>
-                                        </datalist>
-                                        <div v-if="isNewCategory" class="form-text text-orange" style="font-size: 0.75rem;">
-                                            <i class="bi bi-plus-circle"></i> หมวดหมู่ใหม่ จะถูกเพิ่มเมื่อบันทึก
-                                        </div>
-                                    </template>
-                                    <template v-else>
-                                        <select class="form-select custom-input" v-model="form.categoryId">
-                                            <option :value="null">ไม่ระบุหมวดหมู่</option>
-                                            <option v-for="c in categories" :key="c.categoryId" :value="c.categoryId">{{ c.categoryName }}</option>
-                                        </select>
-                                    </template>
+                                    <label class="form-label small fw-bold">หมวดหมู่ (Category)</label>
+                                    <select class="form-select custom-input" v-model="form.categoryId">
+                                        <option :value="null">ไม่ระบุหมวดหมู่</option>
+                                        <option v-for="c in categories" :key="c.categoryId" :value="c.categoryId">{{ c.categoryName }}</option>
+                                    </select>
                                 </div>
 
                                 <div class="col-12">
@@ -146,27 +130,13 @@ const emit = defineEmits(['close', 'saved', 'deleted'])
 const isAdd = computed(() => !props.product)
 
 const brands = ref([])
-const isCustomCategory = ref(false)
 const form = ref({
     pdId: '',
     pdName: props.product?.pdName || '',
     price: props.product ? Number(props.product.price) : '',
     brandName: props.product?.brand?.brandName || '',
     categoryId: props.product ? props.product.categoryId : (props.categories[0]?.categoryId ?? null),
-    categoryName: '',
     description: props.product?.description || '',
-})
-
-const toggleAddCategory = () => {
-    isCustomCategory.value = !isCustomCategory.value
-    if (!isCustomCategory.value) {
-        form.value.categoryName = ''
-    }
-}
-
-const isNewCategory = computed(() => {
-    const name = form.value.categoryName.trim().toLowerCase()
-    return !!name && props.categories.length > 0 && !props.categories.some(c => c.categoryName.toLowerCase() === name)
 })
 const file = ref(null)
 const previewUrl = ref(null)
@@ -239,8 +209,7 @@ const save = async () => {
         pdId,
         pdName: form.value.pdName.trim(),
         brandName: form.value.brandName.trim(),
-        categoryName: isCustomCategory.value ? form.value.categoryName.trim() : '',
-        categoryId: isCustomCategory.value ? null : form.value.categoryId,
+        categoryId: form.value.categoryId,
     }
     try {
         if (isAdd.value) {
