@@ -52,12 +52,20 @@
                         พบ <span class="fw-bold text-dark">{{ filteredProducts.length }}</span> รายการ
                     </div>
 
-                    <button v-if="dutyId === 'admin'" class="btn btn-orange text-white fw-semibold px-3 py-2 shadow-sm d-flex align-items-center gap-1" style="border-radius: 8px; font-size: 0.85rem;" @click="addingProduct = true">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
-                        </svg>
-                        เพิ่มสินค้า
-                    </button>
+                    <div v-if="dutyId === 'admin'" class="d-flex align-items-center gap-2">
+                        <button class="btn btn-orange text-white fw-semibold px-3 py-2 shadow-sm d-flex align-items-center gap-1" style="border-radius: 8px; font-size: 0.85rem;" @click="addingProduct = true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+                            </svg>
+                            เพิ่มสินค้า
+                        </button>
+                        <button class="btn btn-manage-cat fw-semibold px-3 py-2 shadow-sm d-flex align-items-center gap-1" @click="managingCategory = true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+                            </svg>
+                            จัดการหมวดหมู่
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -131,6 +139,8 @@
             @close="editingProduct = null" @saved="onProductSaved" @deleted="onProductDeleted" />
         <ProductEditModal v-if="addingProduct" :categories="categories"
             @close="addingProduct = false" @saved="onProductSaved" />
+        <CategoryManageModal v-if="managingCategory" :categories="categories"
+            @close="managingCategory = false" @updated="onCategoryUpdated" />
     </div>
 </template>
 
@@ -142,14 +152,21 @@ import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import ProductEditModal from './ProductEditModal.vue'
+import CategoryManageModal from './CategoryManageModal.vue'
 
     const authStore = useAuthStore()
 
     // แก้ไขสินค้า (admin)
     const editingProduct = ref(null)
     const addingProduct = ref(false)
+    const managingCategory = ref(false)
     const imgVersion = ref(Date.now()) // เปลี่ยนเมื่ออัปโหลดรูปใหม่ เพื่อให้รูปโหลดใหม่ทันที
     const productImg = (pd) => `http://localhost:3000/img_pd/${pd.pdId}.jpg?v=${imgVersion.value}`
+
+    const onCategoryUpdated = () => {
+        getCategories()
+        getProducts()
+    }
 
     const onProductSaved = (updated, imageChanged, isNew) => {
         getCategories()
@@ -333,6 +350,21 @@ import ProductEditModal from './ProductEditModal.vue'
 .btn-cart:hover, .btn-orange:hover {
   background-color: #ea580c; 
   color: white;
+}
+
+.btn-manage-cat {
+    background-color: #ffffff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.btn-manage-cat:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
 }
 
 .search-input:focus, .custom-select:focus {
