@@ -17,7 +17,8 @@ const msg = (description) => ({
 });
 const ok = (description, schema) => ({ description, content: { 'application/json': { schema } } });
 const body = (schema) => ({ required: true, content: { 'application/json': { schema } } });
-const secured = [{ bearerAuth: [] }];
+// login แล้ว backend ตั้ง cookie "token" ให้ (httpOnly) — ยังรับ Bearer header ได้เหมือนเดิม
+const secured = [{ cookieAuth: [] }, { bearerAuth: [] }];
 const idParam = { name: 'id', in: 'path', required: true, schema: { type: 'integer' } };
 
 export default {
@@ -25,7 +26,10 @@ export default {
   info: { title: 'Auth API', version: '1.0.0' },
   servers: [{ url: `http://localhost:${port}` }],
   components: {
-    securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
+    securitySchemes: {
+      cookieAuth: { type: 'apiKey', in: 'cookie', name: 'token' },
+      bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+    },
     schemas: { User: userSchema },
   },
   paths: {

@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
   email      VARCHAR(255) NOT NULL UNIQUE,
   password   VARCHAR(255) NOT NULL,
   role       VARCHAR(20)  NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
-  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  status     VARCHAR(20)  NOT NULL DEFAULT 'active' CHECK (status IN ('active','suspended'))
 );
 
 -- ==============================================================
@@ -65,7 +66,7 @@ ON CONFLICT ("pdId") DO NOTHING;
 -- ==============================================================
 CREATE TABLE IF NOT EXISTS carts (
     "cartId" VARCHAR(20) PRIMARY KEY,
-    "cusId" VARCHAR(100) NOT NULL,
+    "userId" INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     "cartDate" DATE DEFAULT CURRENT_DATE,
     "cartCf" BOOLEAN DEFAULT FALSE,
     "cartPay" BOOLEAN DEFAULT FALSE,
@@ -83,3 +84,15 @@ CREATE TABLE IF NOT EXISTS "cartDtl" (
     "price" NUMERIC(10, 2) NOT NULL,
     PRIMARY KEY ("cartId", "pdId")
 );
+
+-- ==============================================================
+-- 6. หลังสร้างตาราง (รันด้วย user postgres)
+-- ==============================================================
+-- ถ้า backend ต่อฐานข้อมูลด้วย user อื่น (เช่น dev ใน DATABASE_URL) ต้องให้สิทธิ์ก่อน
+-- ไม่อย่างนั้นจะเจอ "permission denied for table ..." / "permission denied for sequence ..."
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dev;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO dev;
+
+-- admin หลัก (admin@model.store) เป็นคนเดียวที่สลับ role ให้คนอื่นได้
+-- สร้างโดยสมัครสมาชิกผ่านหน้าเว็บด้วยอีเมลนี้ แล้วรัน:
+-- UPDATE users SET role = 'admin' WHERE email = 'admin@model.store';
