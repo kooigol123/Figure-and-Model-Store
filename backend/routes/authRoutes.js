@@ -33,7 +33,7 @@ router.delete("/carts/item", cartC.deleteCartDtl);
 router.delete("/carts/:id", cartC.deleteCart);
 router.post("/carts/confirm", cartC.confirmCart);
 
-// --- History Routes (หน้าประวัติการสั่งซื้อ) ---
+// History Routes (หน้าประวัติการสั่งซื้อ)
 router.get("/carts/history/:userId", cartC.getCartByCustomer); // ตารางประวัติคำสั่งซื้อ
 router.get("/carts/summary/:userId", cartC.getOrderSummary);
 

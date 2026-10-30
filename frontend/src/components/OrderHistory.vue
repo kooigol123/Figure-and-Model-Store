@@ -269,7 +269,7 @@ const getCartList = async () => {
     }      
 }
 
-// --- Modal ดูรายการสินค้าในคำสั่งซื้อ ---
+// Modal ดูรายการสินค้าในคำสั่งซื้อ
 const detailOrder = ref(null);
 const detailItems = ref([]);
 const detailLoading = ref(false);

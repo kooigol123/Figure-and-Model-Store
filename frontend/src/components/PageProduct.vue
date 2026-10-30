@@ -145,7 +145,7 @@ import ProductEditModal from './ProductEditModal.vue'
 
     const authStore = useAuthStore()
 
-    // --- แก้ไขสินค้า (admin) ---
+    // แก้ไขสินค้า (admin)
     const editingProduct = ref(null)
     const addingProduct = ref(false)
     const imgVersion = ref(Date.now()) // เปลี่ยนเมื่ออัปโหลดรูปใหม่ เพื่อให้รูปโหลดใหม่ทันที
