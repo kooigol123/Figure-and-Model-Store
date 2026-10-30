@@ -39,8 +39,8 @@
                                      :alt="pd.pdName"
                                      class="image-lightbox-img" />
                                 <div class="image-lightbox-caption">
-                                    <span class="fw-bold">{{ pd.pdName }}</span>
-                                    <span v-if="pd.brand?.brandName" class="text-white-50 ms-2">({{ pd.brand.brandName }})</span>
+                                    <span class="text-black fw-bold">{{ pd.pdName }}</span>
+                                    <span v-if="pd.brand?.brandName" class="text-black-50 ms-2">({{ pd.brand.brandName }})</span>
                                 </div>
                             </div>
                         </div>
@@ -398,7 +398,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.88);
+    background: transparent;
     backdrop-filter: blur(6px);
     z-index: 9999;
     display: flex;
