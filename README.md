@@ -37,3 +37,5 @@ npm run dev
 ## เอกสารเพิ่มเติม
 
 * คู่มือการใช้งาน Git สำหรับสมาชิก: [GUIDE.md](./Guide.md)
+---
+![alt text](image.png)

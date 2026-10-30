@@ -20,6 +20,9 @@ router.get("/products/search/:id", productC.getSearchProduct);
 router.get("/products/:id", productC.getProductById);
 
 router.get("/categories", productC.getCategories);
+router.post("/categories", auth, requireRole("admin"), productC.postCategory);
+router.put("/categories/:id", auth, requireRole("admin"), productC.putCategory);
+router.delete("/categories/:id", auth, requireRole("admin"), productC.deleteCategory);
 router.get("/brands", productC.getBrands);
 
 // admin เท่านั้น

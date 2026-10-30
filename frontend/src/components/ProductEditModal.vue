@@ -209,6 +209,7 @@ const save = async () => {
         pdId,
         pdName: form.value.pdName.trim(),
         brandName: form.value.brandName.trim(),
+        categoryId: form.value.categoryId,
     }
     try {
         if (isAdd.value) {

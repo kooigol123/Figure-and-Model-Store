@@ -2,12 +2,12 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import Product from "@/components/Product.vue";
 import Home from "@/components/Home.vue";
-import LoginView from "@/views/LoginView.vue"; // หน้า Login + Register (แท็บเดียวกัน)
+import LoginView from "@/components/LoginView.vue"; // หน้า Login + Register (แท็บเดียวกัน)
 import PageMember from '@/components/PageMember.vue';
 import ProductShow from "../components/ProductShow.vue"
 import CartShow from "@/components/CartShow.vue";
 import OrderHistory from "@/components/OrderHistory.vue";
-import AdminBackoffice from "@/components/AdminBackoffice.vue";
+import PageAdmin from "@/components/PageAdmin.vue";
 import { useAuthStore } from "@/stores/authStore";
 
 const routes = [
@@ -55,11 +55,12 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/backoffice',
-        name: 'AdminBackoffice',
-        component: AdminBackoffice,
+        path: '/pageadmin',
+        name: 'PageAdmin',
+        component: PageAdmin,
         meta: { requiresAuth: true }
     },
+    { path: '/backoffice', redirect: '/pageadmin' },
     // path เดิมจาก views ชุดแรก
     { path: '/profile', redirect: '/pagemember' },
     { path: '/products', redirect: '/product' },

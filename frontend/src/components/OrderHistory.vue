@@ -202,7 +202,7 @@
 
                             <div class="text-end text-secondary">
                                 จำนวนสินค้า <span class="fw-bold text-dark fs-5">{{ Number(detailOrder.total_items || 0) }}</span> ชิ้น,
-                                ยอดเงิน <span class="fw-bold text-dark fs-4">{{ Number(detailOrder.total_amount || 0).toLocaleString() }}</span> บาท
+                                ยอดเงิน <span class="fw-bold text-dark fs-5">{{ Number(detailOrder.total_amount || 0).toLocaleString() }}</span> บาท
                             </div>
                         </div>
 
@@ -269,7 +269,7 @@ const getCartList = async () => {
     }      
 }
 
-// --- Modal ดูรายการสินค้าในคำสั่งซื้อ ---
+// Modal ดูรายการสินค้าในคำสั่งซื้อ
 const detailOrder = ref(null);
 const detailItems = ref([]);
 const detailLoading = ref(false);

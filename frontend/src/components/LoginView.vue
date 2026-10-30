@@ -3,8 +3,11 @@
     <div class="auth-container">
       
       <div class="auth-left-banner">
+        <div class="auth-banner-overlay"></div>
         <div class="banner-content">
-          <div class="logo-box-glow">🛍️</div>
+          <div class="logo-box">
+            <img src="@/assets/Logo.gif" alt="Model Store Logo" width="44" height="44" class="rounded-3 object-fit-contain" />
+          </div>
           <h2>Model Store</h2>
           <p>เข้าสู่ระบบเพื่อสั่งซื้อสินค้า ติดตามประวัติการสั่งซื้อ และจัดการข้อมูลส่วนตัวของคุณ</p>
         </div>
@@ -24,12 +27,12 @@
         <form @submit.prevent="handleSubmit" class="form-grid">
           <div v-if="!isLogin" class="form-group">
             <label>ชื่อ-นามสกุล (Name) <span class="req">*</span></label>
-            <input v-model="form.name" type="text" placeholder="👤 กรอกชื่อ-นามสกุลของคุณ" required />
+            <input v-model="form.name" type="text" placeholder="กรอกชื่อ-นามสกุลของคุณ" required />
           </div>
 
           <div class="form-group">
             <label>อีเมล (Email) <span class="req">*</span></label>
-            <input v-model="form.email" type="email" placeholder="✉️ name@student.ac.th" required />
+            <input v-model="form.email" type="email" placeholder="name@gmail.com" required />
           </div>
 
           <div class="form-group">
@@ -37,7 +40,7 @@
             <input 
               v-model="form.password" 
               type="password" 
-              placeholder="🔒 ••••••••" 
+              placeholder="••••••••••••" 
               :minlength="isLogin ? null : 8" 
               required 
             />
@@ -46,7 +49,7 @@
 
           <button type="submit" class="btn-submit" :disabled="loading">
             <template v-if="loading">กำลังดำเนินการ...</template>
-            <template v-else>{{ isLogin ? '→ เข้าสู่ระบบ' : '👤+ สมัครสมาชิก' }}</template>
+            <template v-else>{{ isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก' }}</template>
           </button>
         </form>
 
@@ -109,7 +112,7 @@ const showMessage = (text, ok) => {
 
 const handleSubmit = async () => {
   if (!isLogin.value && form.password.length < 8) {
-    showMessage('⚠️ รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร', false)
+    showMessage('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร', false)
     return
   }
 
@@ -126,7 +129,7 @@ const handleSubmit = async () => {
       const email = form.email.trim()
       switchTab(true)
       form.email = email
-      showMessage('✨ สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ', true)
+      showMessage('สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ', true)
     } else {
       // เข้าสู่ระบบ → backend ตั้ง cookie token ให้ (httpOnly)
       const res = await axios.post(`${API_URL}/auth/login`, {
@@ -177,42 +180,64 @@ const fillDemo = (type) => {
 }
 
 .auth-left-banner {
-  width: 42%;
-  background: #f1f5f9;
-  border-right: 1px solid #e2e8f0;
-  padding: 50px 30px;
+  width: 44%;
+  min-height: 520px;
+  background-color: #1e293b;
+  background-image: url("@/assets/Logo.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+  justify-content: flex-end;
+  padding: 40px 32px;
+  overflow: hidden;
 }
 
-.logo-box-glow {
-  font-size: 36px;
-  width: 70px;
-  height: 70px;
+.auth-banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.85) 100%);
+  z-index: 1;
+}
+
+.banner-content {
+  position: relative;
+  z-index: 2;
+  text-align: left;
+}
+
+.logo-box {
+  width: 48px;
+  height: 48px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  padding: 2px;
 }
 
 .auth-left-banner h2 {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 12px;
+  color: #ffffff;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
 }
 
 .auth-left-banner p {
-  font-size: 13px;
-  color: #64748b;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1.6;
+  margin: 0;
 }
 
 .auth-right-form {

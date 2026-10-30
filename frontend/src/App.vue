@@ -1,7 +1,15 @@
 <template>
-  <div id="app">
+  <div id="app" class="d-flex flex-column min-vh-100">
     <MainMenu v-if="showNavbar" />
-    <router-view />
+    <div class="flex-grow-1">
+      <router-view />
+    </div>
+    <footer v-if="showNavbar" class="site-footer py-4 mt-auto border-top bg-white">
+      <div class="container d-flex flex-wrap justify-content-between align-items-center text-secondary" style="font-size: 0.82rem;">
+        <div>© 2025 Model Store — Model & Figure Store</div>
+        <div>โครงงานรายวิชาการพัฒนาเว็บแอปพลิเคชัน</div>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -18,10 +26,16 @@ const showNavbar = computed(() => {
 </script>
 
 <style>
+/* ตั้งค่า Font Sarabun ทั่วทั้งระบบ ครอบคลุมทั้ง Text, Input, Button, Dropdown */
+*, body, button, input, select, textarea {
+  font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 body {
   margin: 0;
-  font-family: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: #f8fafc;
   color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 </style>

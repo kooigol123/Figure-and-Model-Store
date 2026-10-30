@@ -85,6 +85,90 @@ export async function getCategories(req, res) {
     }
 }
 
+export async function postCategory(req, res) {
+    console.log("POST /categories requested");
+    const categoryName = (req.body.categoryName || "").trim();
+    if (!categoryName) {
+        return res.status(422).json({ message: "กรุณาระบุชื่อหมวดหมู่" });
+    }
+    try {
+        const found = await database.query({
+            text: `SELECT "categoryId", "categoryName" FROM categories WHERE LOWER("categoryName") = LOWER($1)`,
+            values: [categoryName]
+        });
+        if (found.rowCount > 0) {
+            return res.status(200).json(found.rows[0]);
+        }
+        const result = await database.query({
+            text: `INSERT INTO categories ("categoryName") VALUES ($1) RETURNING "categoryId", "categoryName"`,
+            values: [categoryName]
+        });
+        return res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error(">>> ERROR DB DETAIL:", err);
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+export async function putCategory(req, res) {
+    const categoryId = parseInt(req.params.id, 10);
+    const categoryName = (req.body.categoryName || "").trim();
+    if (!categoryName) {
+        return res.status(422).json({ message: "กรุณาระบุชื่อหมวดหมู่" });
+    }
+    try {
+        const duplicate = await database.query({
+            text: `SELECT "categoryId" FROM categories WHERE LOWER("categoryName") = LOWER($1) AND "categoryId" != $2`,
+            values: [categoryName, categoryId]
+        });
+        if (duplicate.rowCount > 0) {
+            return res.status(409).json({ message: "มีหมวดหมู่นี้ในระบบแล้ว" });
+        }
+
+        const result = await database.query({
+            text: `UPDATE categories SET "categoryName" = $1 WHERE "categoryId" = $2 RETURNING "categoryId", "categoryName"`,
+            values: [categoryName, categoryId]
+        });
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "ไม่พบหมวดหมู่ที่ต้องการแก้ไข" });
+        }
+        return res.status(200).json(result.rows[0]);
+    } catch (err) {
+        console.error(">>> ERROR DB DETAIL:", err);
+        return res.status(500).json({ message: err.message });
+    }
+}
+
+export async function deleteCategory(req, res) {
+    const categoryId = parseInt(req.params.id, 10);
+    try {
+        const usage = await database.query({
+            text: `SELECT COUNT(*) AS count FROM products WHERE "categoryId" = $1`,
+            values: [categoryId]
+        });
+        if (parseInt(usage.rows[0].count, 10) > 0) {
+            return res.status(409).json({ 
+                message: "ไม่สามารถลบหมวดหมู่นี้ได้ เนื่องจากมีสินค้าที่ใช้หมวดหมู่นี้อยู่" 
+            });
+        }
+
+        const result = await database.query({
+            text: `DELETE FROM categories WHERE "categoryId" = $1 RETURNING "categoryId", "categoryName"`,
+            values: [categoryId]
+        });
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "ไม่พบหมวดหมู่ที่ต้องการลบ" });
+        }
+        return res.status(200).json({ 
+            message: "ลบหมวดหมู่เรียบร้อยแล้ว",
+            category: result.rows[0]
+        });
+    } catch (err) {
+        console.error(">>> ERROR DB DETAIL:", err);
+        return res.status(500).json({ message: err.message });
+    }
+}
+
 export async function getSearchProduct(req, res) {
     console.log(`GET /products/search/${req.params.id} requested`);
     try {
@@ -154,6 +238,25 @@ async function resolveBrandId(bodyData) {
     return inserted.rows[0].brandId;
 }
 
+// ส่ง categoryName มา: ใช้หมวดหมู่ที่มีอยู่ (ไม่สนตัวพิมพ์เล็ก/ใหญ่) ถ้ายังไม่มีให้เพิ่มใหม่
+// ถ้าไม่ส่ง categoryName ใช้ categoryId ตามเดิม
+async function resolveCategoryId(bodyData) {
+    const categoryName = (bodyData.categoryName || "").trim();
+    if (!categoryName) return bodyData.categoryId || null;
+
+    const found = await database.query({
+        text: `SELECT "categoryId" FROM categories WHERE LOWER("categoryName") = LOWER($1)`,
+        values: [categoryName]
+    });
+    if (found.rowCount > 0) return found.rows[0].categoryId;
+
+    const inserted = await database.query({
+        text: `INSERT INTO categories ("categoryName") VALUES ($1) RETURNING "categoryId"`,
+        values: [categoryName]
+    });
+    return inserted.rows[0].categoryId;
+}
+
 export async function postProduct(req, res) {
     console.log("POST /products is requested");
     const bodyData = req.body;
@@ -171,6 +274,7 @@ export async function postProduct(req, res) {
         }
 
         const brandId = await resolveBrandId(bodyData);
+        const categoryId = await resolveCategoryId(bodyData);
 
         const result = await database.query({
             text: `
@@ -182,7 +286,7 @@ export async function postProduct(req, res) {
                 bodyData.pdId,
                 bodyData.pdName,
                 brandId,
-                bodyData.categoryId || null,
+                categoryId,
                 bodyData.price,
                 bodyData.stock || 10,
                 bodyData.description || "",
@@ -209,6 +313,7 @@ export async function putProduct(req, res) {
         }
 
         const brandId = await resolveBrandId(bodyData);
+        const categoryId = await resolveCategoryId(bodyData);
 
         const result = await database.query({
             text: `
@@ -220,7 +325,7 @@ export async function putProduct(req, res) {
             values: [
                 bodyData.pdName,
                 brandId,
-                bodyData.categoryId || null,
+                categoryId,
                 bodyData.price,
                 bodyData.description || "",
                 req.params.id
