@@ -139,7 +139,7 @@
             @close="editingProduct = null" @saved="onProductSaved" @deleted="onProductDeleted" />
         <ProductEditModal v-if="addingProduct" :categories="categories"
             @close="addingProduct = false" @saved="onProductSaved" />
-        <CategoryManageModal v-if="managingCategory" :categories="categories"
+        <ProductCategory v-if="managingCategory" :categories="categories"
             @close="managingCategory = false" @updated="onCategoryUpdated" />
     </div>
 </template>
@@ -152,7 +152,7 @@ import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 import ProductEditModal from './ProductEditModal.vue'
-import CategoryManageModal from './CategoryManageModal.vue'
+import ProductCategory from './ProductCategory.vue'
 
     const authStore = useAuthStore()
 
