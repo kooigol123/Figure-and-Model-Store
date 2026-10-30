@@ -15,8 +15,8 @@
 
             <div class="row g-4">
                 <div class="col-lg-5 col-md-6 col-sm-12">
-                    <div>
-                        <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`" alt="Product Image" class="img-fluid rounded-4 shadow-sm w-100 object-fit: contain;" style="max-height: 550px; object-position: top;">
+                    <div class="product-detail-img-box rounded-4 shadow-sm overflow-hidden">
+                        <img :src="`http://localhost:3000/img_pd/${pd.pdId}.jpg`" alt="Product Image" class="product-detail-img">
                     </div>
                 </div>
             
@@ -230,5 +230,26 @@
 
 .input-group .form-control {
   border-color: #dee2e6;
+}
+.product-detail-img-box {
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  height: 520px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-detail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  transition: transform 0.4s ease;
+}
+
+.product-detail-img-box:hover .product-detail-img {
+  transform: scale(1.03);
 }
 </style>

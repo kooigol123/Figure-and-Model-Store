@@ -154,6 +154,7 @@ import ProductEditModal from './ProductEditModal.vue';
     const productImg = (pd) => `http://localhost:3000/img_pd/${pd.pdId}.jpg?v=${imgVersion.value}`
 
     const onProductSaved = (updated, imageChanged, isNew) => {
+        getCategories()
         if (isNew) {
             products.value = [...products.value, updated]
         } else {
@@ -285,9 +286,16 @@ import ProductEditModal from './ProductEditModal.vue';
   background-color: #f8f9fa;
   border-bottom: 1px solid #f1f5f9;
   overflow: hidden;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   transition: transform 0.4s ease;
 }
 
@@ -296,6 +304,7 @@ import ProductEditModal from './ProductEditModal.vue';
 }
 
 .card-title {
+  min-height: 2.7rem;
   transition: color 0.2s ease;
 }
 
