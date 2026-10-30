@@ -1,78 +1,99 @@
-# หน้าที่
-ดาน หน้าที่ 1 Backend : API Login,Register,Role,Admin
-ตั้น หน้าที่ 2 Backend : API Product,Cart,Confirm,History
-เซีย หน้าที่ 3 Frontend : Login + Register Page,แก้ไขข้อมูลส่วนตัว,หน้าโชว์โมเดลและรายละเอียดสินค้า
-ริว หน้าที่ 4 Frontend : Admin Page เพิ่ม+แก้ไขสินค้า,หน้าโชว์ Member ทั้งหมดและเปลี่ยน Role ประวัติการสั่งซื้อ
-# Git Workflow Guide
+## 1. การแบ่งหน้าที่รับผิดชอบในกลุ่ม
 
-ข้อตกลงการใช้ Git ในกลุ่ม:
-* ห้าม push โค้ดเข้า `main` ตรงๆ ให้ทุกคนแตก branch ของตัวเองเสมอ
-* ห้าม commit ไฟล์ `.env` หรือโฟลเดอร์ที่ไม่จำเป็นขึ้น GitHub เด็ดขาด
-* ห้ามทำงานชิ้นใหม่ใน branch เดิม ให้สลับกลับ main ดึงโค้ดล่าสุด แล้วแตก branch ใหม่เสมอ
 ---
+1. ดาน (คนที่ 1): Backend API สำหรับ Login, Register, Role และ Admin Backoffice
+2. ตั้น (คนที่ 2): Backend API สำหรับ Product, Cart, Confirm และ Order History
+3. เซีย (คนที่ 3): Frontend หน้า Login, Register, ข้อมูลส่วนตัวสมาชิก และหน้ารายการสินค้า
+4. ริว (คนที่ 4): Frontend หน้า Admin Backoffice, ตารางจัดการสมาชิก และประวัติคำสั่งซื้อ
 
-## หลังจากที่ Git Clone Repo นี้เสร็จให้มาให้ติดตั้ง Node
+## 2. ขั้นตอนการติดตั้งหลัง Clone โปรเจกต์
 
-# ติดตั้งฝั่ง Backend
+---
+1. Clone โปรเจกต์จาก GitHub ลงมาที่เครื่อง
+```bash
+git clone https://github.com/kooigol123/Figure-and-Model-Store.git
+cd Figure-and-Model-Store
+```
+2. ติดตั้งโมดูลสำหรับระบบ Backend
+```bash
 cd backend
 npm install
-# ติดตั้งฝั่ง Frontend
+```
+3. ติดตั้งโมดูลสำหรับระบบ Frontend
+```bash
 cd ../frontend
 npm install
+```
+
+## 3. การเตรียมฐานข้อมูล PostgreSQL
 
 ---
-## คำสั่งที่ต้องใช้ประจำ
-
-1. อัปเดตโค้ดล่าสุดก่อนเริ่มทำ:
+1. เปิด pgAdmin หรือ psql แล้วสร้างฐานข้อมูลใหม่ชื่อ figure_model
+2. เปิดไฟล์ database/schema.sql แล้วรันคำสั่งทั้งหมดเพื่อสร้างตาราง
+3. สร้างข้อมูลตัวอย่างเริ่มต้นได้ 2 วิธี (เลือกวิธีใดวิธีหนึ่ง)
+- วิธีที่ 1 (แนะนำ): รันผ่านสคริปต์ Node.js ในโฟลเดอร์ backend
 ```bash
-git checkout main
-git pull
+cd backend
+npm run seed
 ```
+- วิธีที่ 2: นำเข้าไฟล์ database/seed.sql ผ่าน Query Tool ใน pgAdmin
 
-2. สร้าง branch ใหม่ทำงานตัวเอง:
+## 4. การตั้งค่า Environment และการรันระบบ
+
+---
+1. สร้างไฟล์คอนฟิก .env ในโฟลเดอร์ backend โดยก็อปปี้จากไฟล์ตัวอย่าง .env.example
+2. ตรวจสอบข้อมูลเชื่อมต่อฐานข้อมูลใน backend/.env ให้ตรงกับเครื่องของตนเอง เช่น พอร์ตและรหัสผ่านของ postgres
+3. เริ่มรันระบบหลังบ้าน Backend (พอร์ต 3000)
 ```bash
-git checkout -b feature/<ชื่องาน>
-
-# ตัวอย่างตามหน้าที่:
-git checkout -b feature/auth        # ระบบ Login / Register
-git checkout -b feature/products    # ระบบจัดการสินค้าฟิกเกอร์
-git checkout -b feature/cart        # ระบบตะกร้าสินค้า
-git checkout -b feature/admin       # ระบบจัดการหลังบ้าน
+cd backend
+npm run dev
 ```
-
-3. เช็คไฟล์และเซฟ commit:
+- ตรวจสอบ API Documentation ได้ที่ http://localhost:3000/api-docs
+4. เปิด Terminal อีกหน้าต่าง แล้วเริ่มรันระบบหน้าบ้าน Frontend (พอร์ต 5173)
 ```bash
-git status                          # ตรวจสอบว่าไม่มีไฟล์แปลกปลอม (เช่น .env)
-git add .
-git commit -m "อธิบายสั้นๆ ว่าแก้อะไรไป"
-
-# ตัวอย่าง:
-git commit -m "feat: add login api and jwt token"
-git commit -m "feat: add product list component"
+cd frontend
+npm run dev
 ```
+- เข้าใช้งานเว็บไซต์ได้ที่ http://localhost:5173/
 
-4. ดันโค้ดขึ้น GitHub:
+## 5. ข้อมูลบัญชีสำหรับทดสอบระบบ
+
+---
+1. บัญชีผู้ดูแลระบบ (Admin)
+- อีเมล: admin@model.store
+- รหัสผ่าน: admin1234
+2. บัญชีสมาชิกทั่วไป (Member)
+- อีเมล: test@gmail.com
+- รหัสผ่าน: test1234
+
+## 6. ข้อตกลงการใช้งาน Git และการส่งงาน
+
+---
+1. ห้าม Push โค้ดเข้า branch main ตรงๆ โดยเด็ดขาด ให้ทุกคนทำงานบน Feature Branch ของตนเอง
+2. ห้าม Commit ไฟล์ .env, .db หรือโฟลเดอร์ node_modules ขึ้น GitHub
+3. ก่อนเริ่มทำงานใหม่ทุกครั้ง ให้อัปเดตโค้ดล่าสุดจาก main เสมอ
 ```bash
-# พิมพ์ครั้งแรกเพื่อผูก branch (ครั้งต่อไปถ้ามี commit เพิ่ม พิมพ์แค่ git push ได้เลย)
-git push -u origin feature/<ชื่องาน>
-
-git push origin feature/<ชื่องาน>
-
-# ตัวอย่างตามหน้าที่:
-git push origin feature/auth
-git push origin feature/products
-git push origin feature/cart
-git push origin feature/admin
-```
-
-5. เปิดหน้าเว็บ GitHub แล้วกดสร้าง Pull Request (PR) ให้เพื่อนช่วยเช็คก่อน merge เข้า main
-
-6. เมื่อ Merge เสร็จแล้ว (เตรียมเริ่มงานใหม่):
-```bash
-# สลับกลับมาที่ main แล้วดึงโค้ดใหม่ที่มีงานใหม่อัพเข้ามา
 git checkout main
 git pull origin main
-
-# ลบ branch เก่าที่เสร็จแล้วทิ้งจากเครื่อง (เพื่อไม่ให้รก)
+```
+4. สร้าง Branch ใหม่สำหรับงานของตนเอง
+```bash
+git checkout -b feature/<ชื่องาน>
+```
+5. ตรวจสอบไฟล์ที่แก้ไขและบันทึก Commit
+```bash
+git status
+git add .
+git commit -m "ระบุรายละเอียดงานที่ทำเป็นภาษาไทยกระชับ คั่นด้วยลูกน้ำ"
+```
+6. ส่งโค้ดขึ้น GitHub
+```bash
+git push -u origin feature/<ชื่องาน>
+```
+7. เปิดหน้า GitHub แล้วกดสร้าง Pull Request เพื่อให้เพื่อนช่วยตรวจและ Merge เข้า main
+8. เมื่อ Merge เข้า main เรียบร้อย ให้สลับกลับมาที่ main แล้วลบ branch เดิมในเครื่อง
+```bash
+git checkout main
+git pull origin main
 git branch -d feature/<ชื่องาน>
 ```
