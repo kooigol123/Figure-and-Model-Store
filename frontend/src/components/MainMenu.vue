@@ -2,14 +2,10 @@
   <nav class="navbar navbar-expand-lg bg-white border-bottom py-2 shadow-sm sticky-top">
     <div class="container-fluid px-4">
       <!-- LOGO -->
-      <a class="navbar-brand d-flex align-items-center gap-2 m-0" href="#">
-        <div class="d-flex align-items-center justify-content-center rounded" style="background-color: #f97316; width: 36px; height: 36px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-box-seam" viewBox="0 0 16 16">
-            <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2zm3.564 1.426L5.596 5 8 5.961 14.154 3.5zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.84l-6.5-2.6v7.922zM2.053 3.963l-1-.4v.5z"/>
-          </svg>
-        </div>
+      <router-link to="/" class="navbar-brand d-flex align-items-center gap-2 m-0 text-decoration-none">
+        <img src="@/assets/Logo.gif" alt="Model Store Logo" width="36" height="36" class="rounded object-fit-contain" />
         <span class="fw-bold fs-5 text-dark" style="letter-spacing: -0.5px;">Model Store</span>
-      </a>
+      </router-link>
       <!-- ปุ่มสำหรับมือถือ -->
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -35,7 +31,7 @@
             </router-link>
           </li>
           <li class="nav-item" v-if="dutyId === 'admin'">
-            <router-link to="/backoffice" class="nav-link custom-nav-link fw-semibold text-decoration-none text-orange">
+            <router-link to="/pageadmin" class="nav-link custom-nav-link fw-semibold text-decoration-none text-orange">
               Backoffice
             </router-link>
           </li>
@@ -47,7 +43,7 @@
               <router-link to="/pagemember" class="text-decoration-none">
                 <div class="profile-badge border rounded-pill p-1 pe-3 d-flex align-items-center gap-2">
                   <template v-if="login">
-                    <img :src="authStore.avatarUrl" @error="e => e.target.src = authStore.defaultAvatar" alt="Profile" class="rounded-circle object-fit-cover" width="36" height="36">
+                    <img :src="authStore.avatarUrl" @error="e => { e.target.onerror = null; e.target.src = authStore.defaultAvatar; }" alt="Profile" class="rounded-circle object-fit-cover" width="36" height="36">
                     <div class="d-flex flex-column lh-1 justify-content-center mt-1">
                       <span class="fw-bold text-dark" style="font-size: 0.9rem;">{{ memName }}</span>
                       <span v-if="dutyId === 'admin'" class="text-danger fw-bold" style="font-size: 0.75rem;">

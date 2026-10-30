@@ -15,7 +15,7 @@
       <div class="col-lg-4 col-md-5">
         <div class="card border-0 shadow-sm text-center pt-5 pb-4 px-4" style="border-radius: 12px;">
           <div class="position-relative d-inline-block mx-auto mb-3">
-            <img :src="authStore.avatarUrl" @error="e => e.target.src = authStore.defaultAvatar" alt="Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 140px; height: 140px; border: 4px solid white;">
+            <img :src="authStore.avatarUrl" @error="e => { e.target.onerror = null; e.target.src = authStore.defaultAvatar; }" alt="Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 140px; height: 140px; border: 4px solid white;">
           </div>
           
           <h4 class="fw-bold text-dark mb-1">{{ memName }}</h4>
@@ -78,7 +78,7 @@
             <div class="bg-light rounded-3 p-3 mb-2 border">
               <div class="d-flex align-items-center gap-4">
                 <img v-if="previewUrl" :src="previewUrl" alt="New Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 70px; height: 70px;">
-                <img v-else :src="authStore.avatarUrl" @error="e => e.target.src = authStore.defaultAvatar" alt="Current Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 70px; height: 70px;">
+                <img v-else :src="authStore.avatarUrl" @error="e => { e.target.onerror = null; e.target.src = authStore.defaultAvatar; }" alt="Current Profile" class="rounded-circle object-fit-cover shadow-sm" style="width: 70px; height: 70px;">
 
                 <div class="flex-grow-1">
                   <p class="mb-2 fw-semibold" style="font-size: 0.9rem;">{{ previewUrl ? 'รูปใหม่ (กดบันทึกเพื่อใช้รูปนี้)' : 'รูปปัจจุบัน' }}</p>

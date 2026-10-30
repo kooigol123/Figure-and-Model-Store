@@ -18,10 +18,16 @@ const showNavbar = computed(() => {
 </script>
 
 <style>
+/* ตั้งค่า Font Sarabun ทั่วทั้งระบบ ครอบคลุมทั้ง Text, Input, Button, Dropdown */
+*, body, button, input, select, textarea {
+  font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
 body {
   margin: 0;
-  font-family: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: #f8fafc;
   color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 </style>

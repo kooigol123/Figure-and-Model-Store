@@ -152,6 +152,7 @@ import ProductEditModal from './ProductEditModal.vue'
     const productImg = (pd) => `http://localhost:3000/img_pd/${pd.pdId}.jpg?v=${imgVersion.value}`
 
     const onProductSaved = (updated, imageChanged, isNew) => {
+        getCategories()
         if (isNew) {
             products.value = [...products.value, updated]
         } else {
@@ -283,14 +284,25 @@ import ProductEditModal from './ProductEditModal.vue'
   background-color: #f8f9fa;
   border-bottom: 1px solid #f1f5f9;
   overflow: hidden;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   transition: transform 0.4s ease;
 }
 
 .product-card:hover .img-wrapper img {
   transform: scale(1.08);
+}
+
+.card-title {
+  min-height: 2.7rem;
 }
 
 .product-link {

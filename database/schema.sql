@@ -10,7 +10,18 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   status     VARCHAR(20)  NOT NULL DEFAULT 'active' CHECK (status IN ('active','suspended'))
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active','suspended'));
 
+-- ข้อมูลผู้ใช้งานเริ่มต้น (Admin คนแรก & บัญชีทดสอบ ตรงกับปุ่ม Demo ในหน้า Login)
+-- admin@model.store / รหัสผ่าน: admin1234
+-- test@gmail.com    / รหัสผ่าน: test1234
+INSERT INTO users (name, email, password, role, status) VALUES
+('ผู้ดูแลระบบ (Admin)', 'admin@model.store', '$2b$10$VMoPOgc7S.KMYBe6Pl4WBOtV8O.tjxDFcOKWHYrrTPVT6ogTFoW.i', 'admin', 'active'),
+('สมาชิกทดลอง (Member)', 'test@gmail.com', '$2b$10$L9cqhNBhkU8Ajh.fKzDEA.hhP68g6UeniWI8zqq2XejcoJkLT3n/m', 'user', 'active')
+ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status;
+
+-- มอบสิทธิ์ Admin ให้บัญชีผู้ดูแลระบบพร้อมใช้งานทันที
+UPDATE users SET role = 'admin' WHERE email IN ('admin@model.store', 'anupat.so@ku.th');
 -- ==============================================================
 -- 1. Brands Table (ตารางแบรนด์สินค้า)
 -- ==============================================================
