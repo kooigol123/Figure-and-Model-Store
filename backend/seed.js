@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import db from './services/db.js';
 
 async function seed() {
-    console.log('--- เริ่มต้นสร้างข้อมูลตัวอย่าง (Seeding Data) ---');
+    console.log('Seeding initial data...');
 
     try {
         // 1. สร้างบัญชีผู้ใช้งานเริ่มต้น
@@ -26,7 +26,7 @@ async function seed() {
             ('อนุภัทร สมบัติศรี', $5, $6, 'admin', 'active')
             ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role, status = EXCLUDED.status;
         `, [adminEmail, adminHash, memberEmail, memberHash, anupatEmail, anupatHash]);
-        console.log('✓ ผู้ใช้งานเริ่มต้นพร้อมใช้งาน (Admin & Member)');
+        
 
         // 2. สร้างแบรนด์สินค้า
         await db.query(`
@@ -36,7 +36,7 @@ async function seed() {
             ('Kotobukiya')
             ON CONFLICT ("brandName") DO NOTHING;
         `);
-        console.log('✓ แบรนด์สินค้าเริ่มต้นพร้อมใช้งาน');
+        
 
         // 3. สร้างหมวดหมู่สินค้า
         await db.query(`
@@ -45,7 +45,7 @@ async function seed() {
             ('เนนโดรอยด์ (Nendoroid)')
             ON CONFLICT ("categoryName") DO NOTHING;
         `);
-        console.log('✓ หมวดหมู่สินค้าเริ่มต้นพร้อมใช้งาน');
+        
 
         // 4. สร้างสินค้าตัวอย่าง
         await db.query(`
@@ -54,9 +54,9 @@ async function seed() {
             ('002', 'MG 1/100 RX-78-2 Gundam Ver.Ka', 2, 2, 2290.00, 15, 'โมเดลกันพลาเกรด Master Grade (MG) สเกล 1/100 RX-78-2 Gundam เวอร์ชัน Katoki Hajime สัดส่วนและดีเทลสวยงามสมจริง', '/img_pd/002.jpg')
             ON CONFLICT ("pdId") DO NOTHING;
         `);
-        console.log('✓ สินค้าตัวอย่างเริ่มต้นพร้อมใช้งาน');
+        
 
-        console.log('--- สร้างข้อมูลตัวอย่างเรียบร้อย 100% ---');
+        console.log('Seed completed successfully');
     } catch (err) {
         console.error('เกิดข้อผิดพลาดระหว่าง Seed:', err);
     } finally {

@@ -49,7 +49,7 @@
 
           <button type="submit" class="btn-submit" :disabled="loading">
             <template v-if="loading">กำลังดำเนินการ...</template>
-            <template v-else>{{ isLogin ? '→ เข้าสู่ระบบ' : '👤+ สมัครสมาชิก' }}</template>
+            <template v-else>{{ isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก' }}</template>
           </button>
         </form>
 
@@ -112,7 +112,7 @@ const showMessage = (text, ok) => {
 
 const handleSubmit = async () => {
   if (!isLogin.value && form.password.length < 8) {
-    showMessage('⚠️ รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร', false)
+    showMessage('รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร', false)
     return
   }
 
@@ -129,7 +129,7 @@ const handleSubmit = async () => {
       const email = form.email.trim()
       switchTab(true)
       form.email = email
-      showMessage('✨ สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ', true)
+      showMessage('สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ', true)
     } else {
       // เข้าสู่ระบบ → backend ตั้ง cookie token ให้ (httpOnly)
       const res = await axios.post(`${API_URL}/auth/login`, {

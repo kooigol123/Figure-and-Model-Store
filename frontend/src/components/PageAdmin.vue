@@ -456,7 +456,7 @@ const fetchAllOrders = async () => {
 const pageVersion = Date.now();
 const memberAvatar = (userId) => `http://localhost:3000/img_mem/${userId}.jpg?v=${pageVersion}`;
 
-// --- เปลี่ยนสถานะ / สลับ Role ---
+// เปลี่ยนสถานะ / สลับ Role
 const MAIN_ADMIN_EMAIL = 'admin@model.store';
 const busyId = ref(null);
 const actionError = ref(null);
@@ -509,7 +509,7 @@ const toggleRole = async (mem) => {
     }
 };
 
-// --- ค้นหาสมาชิก (พิมพ์แล้วกรองทันที) จากชื่อ อีเมล หรือรหัสสมาชิก ---
+// ค้นหาสมาชิก (พิมพ์แล้วกรองทันที) จากชื่อ อีเมล หรือรหัสสมาชิก
 const memberSearch = ref('');
 const filteredMembers = computed(() => {
     const q = memberSearch.value.trim().toLowerCase();
@@ -521,7 +521,7 @@ const filteredMembers = computed(() => {
     );
 });
 
-// --- ตัวเลขในการ์ดสรุป ---
+// ตัวเลขในการ์ดสรุป
 const adminCount = computed(() => members.value.filter(m => m.role === 'admin').length);
 const activeCount = computed(() => members.value.filter(m => m.status === 'Active').length);
 const suspendedCount = computed(() => members.value.filter(m => m.status === 'Suspended').length);
@@ -537,7 +537,7 @@ const filteredOrders = computed(() => {
     return orders.value.filter(order => order.status === filterStatus.value);
 });
 
-// --- Modal รายการสินค้าในคำสั่งซื้อ ---
+// Modal รายการสินค้าในคำสั่งซื้อ
 const detailOrder = ref(null);
 const detailItems = ref([]);
 const detailLoading = ref(false);
