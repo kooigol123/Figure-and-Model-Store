@@ -58,15 +58,19 @@ export default {
           },
         }),
         responses: {
-          200: ok('ได้ token', { type: 'object', properties: { token: { type: 'string' }, user: userRef } }),
-          400: msg('ข้อมูลไม่ครบ'), 401: msg('อีเมลหรือรหัสผ่านผิด'),
+          // token ไม่อยู่ใน body — ส่งมาเป็น cookie "token" (httpOnly) ผ่าน Set-Cookie
+          200: ok('สำเร็จ (ตั้ง cookie "token" ให้)', { type: 'object', properties: { user: userRef } }),
+          400: msg('ข้อมูลไม่ครบ'), 401: msg('อีเมลหรือรหัสผ่านผิด'), 403: msg('บัญชีถูกระงับ'),
         },
       },
     },
     '/auth/me': {
       get: {
         tags: ['Auth'], summary: 'ดูข้อมูลตัวเอง', security: secured,
-        responses: { 200: ok('สำเร็จ', userRef), 401: msg('ไม่ได้ login') },
+        responses: {
+          200: ok('สำเร็จ', userRef), 401: msg('ไม่ได้ login'),
+          403: msg('บัญชีถูกระงับ (ลบ cookie ให้)'), 404: msg('ไม่พบผู้ใช้'),
+        },
       },
     },
     '/admin/users': {
