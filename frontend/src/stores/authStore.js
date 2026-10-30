@@ -20,15 +20,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     // ถาม backend ว่า cookie ที่มีอยู่ยัง login อยู่ไหม
-    const fetchMe = async () => {
-        try {
-            const res = await axios.get(`http://localhost:3000/auth/me`)
-            user.value = res.data
+    // - เรียกซ้อนกันหลายที่พร้อมกัน → ใช้ request เดียวกัน (pending)
+    // - ล้าง user เฉพาะ 401/403 (หลุดจริง) error อื่น เช่น 500 / network ให้คง user เดิมไว้
+    let pending = null
+    const fetchMe = () => {
+        if (!pending) {
+            pending = axios.get(`http://localhost:3000/auth/me`)
+                .then(res => { user.value = res.data })
+                .catch(err => {
+                    if ([401, 403].includes(err.response?.status)) user.value = null
+                })
+                .finally(() => { pending = null })
         }
-        catch {
-            user.value = null
-        }
-        return user.value
+        return pending.then(() => user.value)
     }
 
     const login = (userData) => {
